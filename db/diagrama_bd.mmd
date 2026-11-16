@@ -1,0 +1,62 @@
+erDiagram
+    lote_carga ||--o{ dato_entrenamiento : "contiene"
+    modelo ||--o{ prediccion : "genera"
+
+    lote_carga {
+        SERIAL id PK
+        VARCHAR nombre_archivo
+        INTEGER filas_recibidas
+        INTEGER filas_validas
+        INTEGER duplicados_eliminados
+        INTEGER filas_invalidas
+        TIMESTAMP fecha
+    }
+    dato_entrenamiento {
+        SERIAL id PK
+        INTEGER lote_id FK
+        INTEGER administrative
+        NUMERIC administrative_duration
+        INTEGER informational
+        NUMERIC informational_duration
+        INTEGER product_related
+        NUMERIC product_related_duration
+        NUMERIC bounce_rates
+        NUMERIC exit_rates
+        NUMERIC page_values
+        NUMERIC special_day
+        VARCHAR month
+        SMALLINT operating_systems
+        SMALLINT browser
+        SMALLINT region
+        SMALLINT traffic_type
+        VARCHAR visitor_type
+        BOOLEAN weekend
+        BOOLEAN revenue "objetivo"
+        TIMESTAMP fecha
+    }
+    modelo {
+        SERIAL id PK
+        INTEGER version UK
+        VARCHAR algoritmo
+        JSONB hiperparametros
+        NUMERIC umbral
+        NUMERIC recall
+        NUMERIC precision
+        NUMERIC f1
+        NUMERIC f2
+        NUMERIC roc_auc
+        JSONB matriz_confusion
+        INTEGER filas_entrenamiento
+        INTEGER filas_prueba
+        VARCHAR ruta_archivo
+        BOOLEAN activo
+        TIMESTAMP fecha
+    }
+    prediccion {
+        SERIAL id PK
+        INTEGER modelo_id FK
+        JSONB entrada
+        BOOLEAN resultado
+        NUMERIC probabilidad
+        TIMESTAMP fecha
+    }
