@@ -1,0 +1,42 @@
+{
+  "algoritmo": "Random Forest",
+  "hiperparametros": {
+    "n_estimators": 200,
+    "min_samples_leaf": 5,
+    "max_features": 0.5,
+    "max_depth": 6
+  },
+  "balanceo": "class_weight=balanced",
+  "umbral": 0.39,
+  "columnas_numericas": [
+    "Administrative",
+    "Administrative_Duration",
+    "Informational",
+    "Informational_Duration",
+    "ProductRelated",
+    "ProductRelated_Duration",
+    "BounceRates",
+    "ExitRates",
+    "PageValues",
+    "SpecialDay",
+    "OperatingSystems",
+    "Browser",
+    "Region",
+    "TrafficType",
+    "Weekend"
+  ],
+  "columnas_categoricas": [
+    "Month",
+    "VisitorType"
+  ],
+  "random_state": 42,
+  "metricas_test": {
+    "recall": 0.8953,
+    "precision": 0.4921,
+    "f1": 0.6351,
+    "f2": 0.7692,
+    "roc_auc": 0.9354
+  },
+  "filas_entrenamiento": 9764,
+  "filas_test": 2441
+}
