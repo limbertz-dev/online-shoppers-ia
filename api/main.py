@@ -45,12 +45,13 @@ _cache_modelos = {}
 def modelo_activo():
     """Devuelve (fila del modelo activo, pipeline cargado) o lanza 503 si no hay modelo."""
     with engine.connect() as con:
-        fila = con.execute(text('SELECT id, version, umbral, ruta_archivo FROM modelo WHERE activo')).mappings().first()
+        fila = con.execute(text('SELECT id, version, umbral, ruta_archivo, fecha FROM modelo WHERE activo')).mappings().first()
     if not fila:
         raise HTTPException(503, 'No hay un modelo activo. Cargue datos con POST /training-data y ejecute POST /retrain.')
-    if fila['id'] not in _cache_modelos:
-        _cache_modelos[fila['id']] = joblib.load(BASE / fila['ruta_archivo'])
-    return fila, _cache_modelos[fila['id']]
+    clave = (fila['id'], str(fila['fecha']))   # la fecha evita usar un modelo viejo si se reinicia la BD
+    if clave not in _cache_modelos:
+        _cache_modelos[clave] = joblib.load(BASE / fila['ruta_archivo'])
+    return fila, _cache_modelos[clave]
 
 
 def fila_a_metricas(f) -> dict:

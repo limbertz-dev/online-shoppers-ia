@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Online Shoppers IA</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Online Shoppers IA</h1>
+    <p>Predicción de compra en sesiones de e-commerce</p>
+  </div>
+  <div class="status" id="estado">
+    <span class="pill" id="st-api">API …</span>
+    <span class="pill" id="st-db">BD …</span>
+    <span class="pill" id="st-modelo">Modelo …</span>
+    <span class="pill" id="st-datos">Datos …</span>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="predecir">Predecir</button>
+  <button class="tab" data-tab="historial">Historial</button>
+  <button class="tab" data-tab="metricas">Métricas</button>
+  <button class="tab" data-tab="datos">Datos de entrenamiento</button>
+  <button class="tab" data-tab="reentrenar">Reentrenar</button>
+</nav>
+
+<main>
+  <!-- ============ PREDECIR ============ -->
+  <section id="predecir" class="panel active">
+    <div class="panel-head">
+      <div>
+        <h2>Predecir una sesión</h2>
+        <p class="muted">Ingrese los datos de la sesión y el modelo indica si terminará en compra. <code>POST /predict</code></p>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="ej-compra">Ejemplo: compra</button>
+        <button class="btn ghost" id="ej-nocompra">Ejemplo: no compra</button>
+      </div>
+    </div>
+    <div class="predict-layout">
+      <form id="form-pred" class="form-grid"></form>
+      <aside class="result" id="resultado">
+        <p class="muted">El resultado aparecerá aquí.</p>
+      </aside>
+    </div>
+    <div class="form-foot"><button class="btn primary" id="btn-predecir" form="form-pred" type="submit">Enviar al modelo</button></div>
+  </section>
+
+  <!-- ============ HISTORIAL ============ -->
+  <section id="historial" class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Historial de predicciones</h2>
+        <p class="muted">Datos enviados y resultado de cada predicción. <code>GET /predictions</code></p>
+      </div>
+      <div class="actions"><button class="btn ghost" id="btn-hist">Actualizar</button></div>
+    </div>
+    <div class="table-wrap"><table id="tabla-hist"></table></div>
+    <div class="pager">
+      <button class="btn ghost" id="hist-prev">Anterior</button>
+      <span id="hist-info" class="muted"></span>
+      <button class="btn ghost" id="hist-next">Siguiente</button>
+    </div>
+  </section>
+
+  <!-- ============ MÉTRICAS ============ -->
+  <section id="metricas" class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Métricas del modelo</h2>
+        <p class="muted">Rendimiento del modelo activo sobre el conjunto de prueba. <code>GET /metrics</code> · <code>GET /metrics/history</code></p>
+      </div>
+      <div class="actions"><button class="btn ghost" id="btn-met">Actualizar</button></div>
+    </div>
+    <div id="met-info" class="muted"></div>
+    <div class="cards" id="met-cards"></div>
+    <div class="two-col">
+      <div>
+        <h3>Matriz de confusión</h3>
+        <div id="met-cm"></div>
+      </div>
+      <div>
+        <h3>Versiones del modelo</h3>
+        <div class="table-wrap"><table id="tabla-versiones"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DATOS ============ -->
+  <section id="datos" class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Enviar archivo de entrenamiento</h2>
+        <p class="muted">CSV con las 18 columnas del dataset. El servicio lo valida, limpia (tipos, nulos, duplicados) y lo guarda en la base de datos. <code>POST /training-data</code></p>
+      </div>
+    </div>
+    <form id="form-csv" class="upload">
+      <label class="drop" id="drop">
+        <input type="file" id="archivo" accept=".csv" required>
+        <span id="drop-text">Haga clic o arrastre aquí un archivo <b>.csv</b></span>
+      </label>
+      <label class="check"><input type="checkbox" id="reemplazar"> Reemplazar los datos anteriores</label>
+      <button class="btn primary" type="submit" id="btn-csv">Subir CSV</button>
+    </form>
+    <div id="csv-res"></div>
+  </section>
+
+  <!-- ============ REENTRENAR ============ -->
+  <section id="reentrenar" class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Reentrenar el modelo</h2>
+        <p class="muted">Entrena una nueva versión con todos los datos de la base de datos, usando el algoritmo e hiperparámetros elegidos en el notebook. Se activa solo si cumple Recall ≥ 70 %. <code>POST /retrain</code></p>
+      </div>
+    </div>
+    <button class="btn primary" id="btn-retrain">Reentrenar ahora</button>
+    <div id="retrain-res"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="app.js"></script>
+</body>
+</html>
