@@ -1,0 +1,6 @@
+-r api/requirements.txt
+matplotlib
+seaborn
+jupyter
+nbconvert
+ipykernel
