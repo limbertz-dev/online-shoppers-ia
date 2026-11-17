@@ -1,0 +1,881 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Online Shoppers IA",
+    "description": "Servicio de IA que predice si una sesión de navegación en una tienda online termina en **compra**.\n\nModelo de clasificación supervisada entrenado con el dataset *Online Shoppers Purchasing Intention* siguiendo la metodología CRISP-ML(Q). Los datos de entrenamiento, los modelos con sus métricas y el historial de predicciones se guardan en PostgreSQL.\n\nFlujo: `POST /training-data` (subir CSV) → `POST /retrain` (entrenar) → `POST /predict` (predecir) → `GET /predictions` y `GET /metrics` (consultar).",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/predict": {
+      "post": {
+        "tags": [
+          "Predicción"
+        ],
+        "summary": "Enviar datos al modelo y obtener la predicción",
+        "description": "Recibe las 17 variables de una sesión, devuelve si habrá compra y la guarda en el historial.",
+        "operationId": "predecir_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SesionEntrada"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrediccionRespuesta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predictions": {
+      "get": {
+        "tags": [
+          "Predicción"
+        ],
+        "summary": "Historial de predicciones previas",
+        "description": "Devuelve los datos enviados y el resultado de cada predicción, de la más reciente a la más antigua.",
+        "operationId": "historial_predictions_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistorialRespuesta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": [
+          "Modelo"
+        ],
+        "summary": "Métricas de rendimiento del modelo activo",
+        "description": "Recall, Precision, F1, F2, ROC-AUC y matriz de confusión del modelo activo (conjunto de prueba).",
+        "operationId": "metricas_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModeloMetricas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics/history": {
+      "get": {
+        "tags": [
+          "Modelo"
+        ],
+        "summary": "Métricas de todas las versiones del modelo",
+        "description": "Permite comparar cómo cambiaron las métricas en cada reentrenamiento.",
+        "operationId": "metricas_historial_metrics_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModeloMetricas"
+                  },
+                  "type": "array",
+                  "title": "Response Metricas Historial Metrics History Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/retrain": {
+      "post": {
+        "tags": [
+          "Modelo"
+        ],
+        "summary": "Reentrenar el modelo con la información actualizada",
+        "description": "Entrena una nueva versión con todos los datos de la tabla de entrenamiento usando la configuración\nelegida en el notebook (algoritmo, hiperparámetros y criterio de umbral). Guarda sus métricas y la activa\nsolo si cumple Recall >= 70 %.",
+        "operationId": "reentrenar_retrain_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReentrenamientoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/training-data": {
+      "post": {
+        "tags": [
+          "Datos"
+        ],
+        "summary": "Enviar el archivo CSV de entrenamiento",
+        "description": "Valida y limpia el CSV (tipos, filas inválidas, nulos, duplicados) y lo guarda en la tabla de\nentrenamiento. Después se puede llamar a POST /retrain.",
+        "operationId": "cargar_datos_training_data_post",
+        "parameters": [
+          {
+            "name": "reemplazar",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "TRUE borra los datos anteriores antes de cargar",
+              "default": false,
+              "title": "Reemplazar"
+            },
+            "description": "TRUE borra los datos anteriores antes de cargar"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_cargar_datos_training_data_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargaRespuesta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "Estado del servicio",
+        "operationId": "salud_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Salud"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_cargar_datos_training_data_post": {
+        "properties": {
+          "archivo": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Archivo",
+            "description": "CSV con las 18 columnas del dataset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "archivo"
+        ],
+        "title": "Body_cargar_datos_training_data_post"
+      },
+      "CargaRespuesta": {
+        "properties": {
+          "lote_id": {
+            "type": "integer",
+            "title": "Lote Id"
+          },
+          "nombre_archivo": {
+            "type": "string",
+            "title": "Nombre Archivo"
+          },
+          "filas_recibidas": {
+            "type": "integer",
+            "title": "Filas Recibidas"
+          },
+          "filas_invalidas": {
+            "type": "integer",
+            "title": "Filas Invalidas"
+          },
+          "nulos_imputados": {
+            "type": "integer",
+            "title": "Nulos Imputados"
+          },
+          "duplicados_eliminados": {
+            "type": "integer",
+            "title": "Duplicados Eliminados"
+          },
+          "filas_validas": {
+            "type": "integer",
+            "title": "Filas Validas"
+          },
+          "total_datos_entrenamiento": {
+            "type": "integer",
+            "title": "Total Datos Entrenamiento",
+            "description": "Filas totales en la tabla de entrenamiento tras la carga"
+          },
+          "reemplazo": {
+            "type": "boolean",
+            "title": "Reemplazo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lote_id",
+          "nombre_archivo",
+          "filas_recibidas",
+          "filas_invalidas",
+          "nulos_imputados",
+          "duplicados_eliminados",
+          "filas_validas",
+          "total_datos_entrenamiento",
+          "reemplazo"
+        ],
+        "title": "CargaRespuesta"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HistorialRespuesta": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PrediccionHistorial"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "HistorialRespuesta"
+      },
+      "Metricas": {
+        "properties": {
+          "recall": {
+            "type": "number",
+            "title": "Recall"
+          },
+          "precision": {
+            "type": "number",
+            "title": "Precision"
+          },
+          "f1": {
+            "type": "number",
+            "title": "F1"
+          },
+          "f2": {
+            "type": "number",
+            "title": "F2"
+          },
+          "roc_auc": {
+            "type": "number",
+            "title": "Roc Auc"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recall",
+          "precision",
+          "f1",
+          "f2",
+          "roc_auc"
+        ],
+        "title": "Metricas"
+      },
+      "ModeloMetricas": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "algoritmo": {
+            "type": "string",
+            "title": "Algoritmo"
+          },
+          "activo": {
+            "type": "boolean",
+            "title": "Activo"
+          },
+          "umbral": {
+            "type": "number",
+            "title": "Umbral"
+          },
+          "metricas": {
+            "$ref": "#/components/schemas/Metricas"
+          },
+          "matriz_confusion": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Matriz Confusion",
+            "description": "{\"tn\", \"fp\", \"fn\", \"tp\"} sobre el conjunto de prueba"
+          },
+          "hiperparametros": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Hiperparametros"
+          },
+          "filas_entrenamiento": {
+            "type": "integer",
+            "title": "Filas Entrenamiento"
+          },
+          "filas_prueba": {
+            "type": "integer",
+            "title": "Filas Prueba"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "algoritmo",
+          "activo",
+          "umbral",
+          "metricas",
+          "matriz_confusion",
+          "hiperparametros",
+          "filas_entrenamiento",
+          "filas_prueba",
+          "fecha"
+        ],
+        "title": "ModeloMetricas"
+      },
+      "PrediccionHistorial": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "entrada": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Entrada"
+          },
+          "compra": {
+            "type": "boolean",
+            "title": "Compra"
+          },
+          "probabilidad": {
+            "type": "number",
+            "title": "Probabilidad"
+          },
+          "modelo_version": {
+            "type": "integer",
+            "title": "Modelo Version"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entrada",
+          "compra",
+          "probabilidad",
+          "modelo_version",
+          "fecha"
+        ],
+        "title": "PrediccionHistorial"
+      },
+      "PrediccionRespuesta": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "Id de la predicción guardada en el historial"
+          },
+          "compra": {
+            "type": "boolean",
+            "title": "Compra",
+            "description": "TRUE si el modelo predice que la sesión termina en compra"
+          },
+          "probabilidad": {
+            "type": "number",
+            "title": "Probabilidad",
+            "description": "Probabilidad de compra estimada por el modelo"
+          },
+          "umbral": {
+            "type": "number",
+            "title": "Umbral",
+            "description": "Umbral de decisión del modelo activo"
+          },
+          "modelo_version": {
+            "type": "integer",
+            "title": "Modelo Version"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "compra",
+          "probabilidad",
+          "umbral",
+          "modelo_version",
+          "fecha"
+        ],
+        "title": "PrediccionRespuesta"
+      },
+      "ReentrenamientoRespuesta": {
+        "properties": {
+          "modelo_id": {
+            "type": "integer",
+            "title": "Modelo Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "algoritmo": {
+            "type": "string",
+            "title": "Algoritmo"
+          },
+          "activado": {
+            "type": "boolean",
+            "title": "Activado"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "umbral": {
+            "type": "number",
+            "title": "Umbral"
+          },
+          "metricas": {
+            "$ref": "#/components/schemas/Metricas"
+          },
+          "matriz_confusion": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Matriz Confusion"
+          },
+          "filas_entrenamiento": {
+            "type": "integer",
+            "title": "Filas Entrenamiento"
+          },
+          "filas_prueba": {
+            "type": "integer",
+            "title": "Filas Prueba"
+          },
+          "modelo_anterior": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelo Anterior",
+            "description": "Métricas del modelo que estaba activo antes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "modelo_id",
+          "version",
+          "algoritmo",
+          "activado",
+          "motivo",
+          "umbral",
+          "metricas",
+          "matriz_confusion",
+          "filas_entrenamiento",
+          "filas_prueba",
+          "modelo_anterior"
+        ],
+        "title": "ReentrenamientoRespuesta"
+      },
+      "Salud": {
+        "properties": {
+          "api": {
+            "type": "string",
+            "title": "Api"
+          },
+          "base_de_datos": {
+            "type": "string",
+            "title": "Base De Datos"
+          },
+          "modelo_activo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelo Activo"
+          },
+          "datos_entrenamiento": {
+            "type": "integer",
+            "title": "Datos Entrenamiento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api",
+          "base_de_datos",
+          "modelo_activo",
+          "datos_entrenamiento"
+        ],
+        "title": "Salud"
+      },
+      "SesionEntrada": {
+        "properties": {
+          "Administrative": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Administrative",
+            "description": "Páginas administrativas visitadas"
+          },
+          "Administrative_Duration": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Administrative Duration",
+            "description": "Segundos en páginas administrativas"
+          },
+          "Informational": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Informational",
+            "description": "Páginas informativas visitadas"
+          },
+          "Informational_Duration": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Informational Duration",
+            "description": "Segundos en páginas informativas"
+          },
+          "ProductRelated": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Productrelated",
+            "description": "Páginas de productos visitadas"
+          },
+          "ProductRelated_Duration": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Productrelated Duration",
+            "description": "Segundos en páginas de productos"
+          },
+          "BounceRates": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Bouncerates",
+            "description": "Tasa de rebote promedio de las páginas visitadas"
+          },
+          "ExitRates": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Exitrates",
+            "description": "Tasa de salida promedio de las páginas visitadas"
+          },
+          "PageValues": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Pagevalues",
+            "description": "Valor promedio de las páginas visitadas antes de comprar"
+          },
+          "SpecialDay": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Specialday",
+            "description": "Cercanía a una fecha especial (0 a 1)"
+          },
+          "Month": {
+            "type": "string",
+            "enum": [
+              "Jan",
+              "Feb",
+              "Mar",
+              "Apr",
+              "May",
+              "June",
+              "Jul",
+              "Aug",
+              "Sep",
+              "Oct",
+              "Nov",
+              "Dec"
+            ],
+            "title": "Month",
+            "description": "Mes de la sesión"
+          },
+          "OperatingSystems": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Operatingsystems",
+            "description": "Código del sistema operativo"
+          },
+          "Browser": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Browser",
+            "description": "Código del navegador"
+          },
+          "Region": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Region",
+            "description": "Código de la región"
+          },
+          "TrafficType": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Traffictype",
+            "description": "Código del tipo de tráfico"
+          },
+          "VisitorType": {
+            "type": "string",
+            "enum": [
+              "Returning_Visitor",
+              "New_Visitor",
+              "Other"
+            ],
+            "title": "Visitortype",
+            "description": "Tipo de visitante"
+          },
+          "Weekend": {
+            "type": "boolean",
+            "title": "Weekend",
+            "description": "La sesión fue en fin de semana"
+          }
+        },
+        "type": "object",
+        "required": [
+          "Administrative",
+          "Administrative_Duration",
+          "Informational",
+          "Informational_Duration",
+          "ProductRelated",
+          "ProductRelated_Duration",
+          "BounceRates",
+          "ExitRates",
+          "PageValues",
+          "SpecialDay",
+          "Month",
+          "OperatingSystems",
+          "Browser",
+          "Region",
+          "TrafficType",
+          "VisitorType",
+          "Weekend"
+        ],
+        "title": "SesionEntrada",
+        "description": "Datos de una sesión de navegación (las 17 variables del dataset).",
+        "example": {
+          "Administrative": 3,
+          "Administrative_Duration": 85.0,
+          "BounceRates": 0.005,
+          "Browser": 2,
+          "ExitRates": 0.02,
+          "Informational": 0,
+          "Informational_Duration": 0.0,
+          "Month": "Nov",
+          "OperatingSystems": 2,
+          "PageValues": 25.5,
+          "ProductRelated": 40,
+          "ProductRelated_Duration": 1500.0,
+          "Region": 1,
+          "SpecialDay": 0.0,
+          "TrafficType": 2,
+          "VisitorType": "Returning_Visitor",
+          "Weekend": false
+        }
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Predicción",
+      "description": "Enviar datos al modelo y consultar el historial."
+    },
+    {
+      "name": "Modelo",
+      "description": "Métricas de rendimiento y reentrenamiento."
+    },
+    {
+      "name": "Datos",
+      "description": "Carga del archivo de entrenamiento."
+    },
+    {
+      "name": "Sistema",
+      "description": "Estado del servicio."
+    }
+  ]
+}
