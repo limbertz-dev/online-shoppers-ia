@@ -1,0 +1,81 @@
+{
+  "algoritmo": "XGBoost",
+  "hiperparametros": {
+    "subsample": 1.0,
+    "n_estimators": 300,
+    "min_child_weight": 5,
+    "max_depth": 3,
+    "learning_rate": 0.03,
+    "colsample_bytree": 0.8
+  },
+  "balanceo": "scale_pos_weight = negativos/positivos (se recalcula al reentrenar)",
+  "comparacion_cv": [
+    {
+      "modelo": "Árbol de Decisión",
+      "recall": 0.829,
+      "precision": 0.489,
+      "f2": 0.728,
+      "roc_auc": 0.891
+    },
+    {
+      "modelo": "XGBoost",
+      "recall": 0.776,
+      "precision": 0.579,
+      "f2": 0.726,
+      "roc_auc": 0.925
+    },
+    {
+      "modelo": "Random Forest",
+      "recall": 0.737,
+      "precision": 0.64,
+      "f2": 0.715,
+      "roc_auc": 0.93
+    },
+    {
+      "modelo": "Regresión Logística",
+      "recall": 0.761,
+      "precision": 0.524,
+      "f2": 0.698,
+      "roc_auc": 0.9
+    },
+    {
+      "modelo": "KNN",
+      "recall": 0.315,
+      "precision": 0.752,
+      "f2": 0.356,
+      "roc_auc": 0.836
+    }
+  ],
+  "umbral": 0.44,
+  "columnas_numericas": [
+    "Administrative",
+    "Administrative_Duration",
+    "Informational",
+    "Informational_Duration",
+    "ProductRelated",
+    "ProductRelated_Duration",
+    "BounceRates",
+    "ExitRates",
+    "PageValues",
+    "SpecialDay",
+    "OperatingSystems",
+    "Browser",
+    "Region",
+    "TrafficType",
+    "Weekend"
+  ],
+  "columnas_categoricas": [
+    "Month",
+    "VisitorType"
+  ],
+  "random_state": 42,
+  "metricas_test": {
+    "recall": 0.8927,
+    "precision": 0.5059,
+    "f1": 0.6458,
+    "f2": 0.7743,
+    "roc_auc": 0.9386
+  },
+  "filas_entrenamiento": 9764,
+  "filas_test": 2441
+}
