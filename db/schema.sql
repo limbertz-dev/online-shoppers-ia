@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS prediccion;
 DROP TABLE IF EXISTS modelo;
 DROP TABLE IF EXISTS dato_entrenamiento;
 DROP TABLE IF EXISTS lote_carga;
+DROP TABLE IF EXISTS usuario;
 
 -- ---------------------------------------------------------------------
 -- 1. lote_carga: cada archivo CSV enviado al servicio
@@ -90,6 +91,24 @@ CREATE TABLE prediccion (
     fecha         TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 CREATE INDEX ix_prediccion_fecha ON prediccion(fecha DESC);
+
+-- ---------------------------------------------------------------------
+-- 5. usuario: cuentas para iniciar sesión (JWT) y su rol
+--    password_hash = PBKDF2-SHA256 con sal (nunca la contraseña en texto plano)
+-- ---------------------------------------------------------------------
+CREATE TABLE usuario (
+    id             SERIAL PRIMARY KEY,
+    usuario        VARCHAR(50)  NOT NULL UNIQUE,
+    password_hash  VARCHAR(255) NOT NULL,
+    rol            VARCHAR(20)  NOT NULL CHECK (rol IN ('admin', 'analista')),
+    activo         BOOLEAN      NOT NULL DEFAULT TRUE,
+    fecha          TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+-- Usuarios de demostración (contraseñas: admin123 y analista123)
+INSERT INTO usuario (usuario, password_hash, rol) VALUES
+('admin',    'pbkdf2_sha256$200000$fd8f33fbdc2b2fbb1e35b2e67eef45ca$61eca56837556988451418d146f25cafef72bf5a46bf6fe504735287e0c81fa7', 'admin'),
+('analista', 'pbkdf2_sha256$200000$32b12c074f1f865bc40edf3bf9e7f2af$bc39cda4c4ee4e81b80509ebf19d2632ceb80dd63ffc3435eff8f69d42c892c2', 'analista');
 
 -- ---------------------------------------------------------------------
 -- Procedimiento: registrar una predicción y devolver su id
