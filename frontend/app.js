@@ -1,6 +1,14 @@
-// Cliente web del servicio de IA Online Shoppers.
-// Si la página la sirve la propia API (/app) usa el mismo origen; si se abre aparte, usa localhost:8000.
-const API = location.port === '8000' ? '' : 'http://localhost:8000';
+// Cliente web (frontend independiente) del servicio de IA Online Shoppers.
+// Se comunica con el backend por API REST y envía el JWT en cada petición.
+const API = (window.CONFIG && window.CONFIG.API_URL) || 'http://localhost:8000';
+
+// ---------------------------------------------------------------- sesión (JWT)
+const sesion = {
+  get token() { try { return sessionStorage.getItem('token'); } catch { return null; } },
+  get usuario() { try { return JSON.parse(sessionStorage.getItem('usuario') || 'null'); } catch { return null; } },
+  guardar(t) { try { sessionStorage.setItem('token', t.access_token); sessionStorage.setItem('usuario', JSON.stringify({ usuario: t.usuario, rol: t.rol })); } catch {} },
+  cerrar() { try { sessionStorage.removeItem('token'); sessionStorage.removeItem('usuario'); } catch {} },
+};
 
 const MESES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const CAMPOS = [
@@ -49,7 +57,14 @@ function aviso(msg, ok = false) {
 }
 
 async function api(ruta, opciones = {}) {
-  const r = await fetch(API + ruta, opciones);
+  const headers = { ...(opciones.headers || {}) };
+  if (sesion.token) headers.Authorization = `Bearer ${sesion.token}`;
+  const r = await fetch(API + ruta, { ...opciones, headers });
+  if (r.status === 401 && ruta !== '/auth/login') {
+    sesion.cerrar();
+    mostrarLogin();
+    throw new Error('La sesión venció o el token no es válido. Inicie sesión de nuevo.');
+  }
   const datos = await r.json().catch(() => ({}));
   if (!r.ok) {
     let d = datos.detail;
@@ -242,8 +257,35 @@ $('#btn-retrain').onclick = () => ocupado($('#btn-retrain'), 'Entrenando… (uno
   cargarEstado();
 });
 
+// ---------------------------------------------------------------- login / logout
+function mostrarLogin() {
+  $('#login').hidden = false; $('#app').hidden = true;
+  $('#usuario-actual').hidden = true; $('#btn-salir').hidden = true;
+  $('#l-usuario').focus();
+}
+function mostrarApp() {
+  const u = sesion.usuario;
+  $('#login').hidden = true; $('#app').hidden = false;
+  $('#usuario-actual').innerHTML = `<b>${esc(u.usuario)}</b> · ${esc(u.rol)}`;
+  $('#usuario-actual').hidden = false; $('#btn-salir').hidden = false;
+  // Autorización en la interfaz: el analista no ve carga de datos ni reentrenamiento (el backend igual lo valida)
+  document.querySelectorAll('.solo-admin').forEach((t) => (t.hidden = u.rol !== 'admin'));
+  const inicial = document.querySelector(`.tab[data-tab="${location.hash.slice(1)}"]:not([hidden])`)
+    || document.querySelector('.tab[data-tab="predecir"]');
+  inicial.click();
+}
+$('#form-login').addEventListener('submit', (e) => {
+  e.preventDefault();
+  ocupado($('#btn-login'), 'Ingresando…', async () => {
+    const cuerpo = new URLSearchParams({ username: $('#l-usuario').value, password: $('#l-password').value });
+    const t = await api('/auth/login', { method: 'POST', body: cuerpo });
+    sesion.guardar(t);
+    $('#l-password').value = '';
+    mostrarApp();
+  });
+});
+$('#btn-salir').onclick = () => { sesion.cerrar(); mostrarLogin(); };
+
 construirFormulario();
 cargarEstado();
-// Abrir una pestaña directamente desde la URL, por ejemplo /app/#metricas
-const inicial = document.querySelector(`.tab[data-tab="${location.hash.slice(1)}"]`);
-if (inicial) inicial.click();
+if (sesion.token && sesion.usuario) mostrarApp(); else mostrarLogin();
