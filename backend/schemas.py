@@ -113,3 +113,16 @@ class Salud(BaseModel):
     base_de_datos: str
     modelo_activo: Optional[int]
     datos_entrenamiento: int
+
+
+class Token(BaseModel):
+    access_token: str = Field(description='JSON Web Token; enviarlo como  Authorization: Bearer <token>')
+    token_type: str = 'bearer'
+    expira_en_minutos: int
+    usuario: str
+    rol: str
+
+
+class UsuarioActual(BaseModel):
+    usuario: str
+    rol: str

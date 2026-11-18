@@ -132,3 +132,16 @@ th.num { text-align: right; }
   .top, .tabs { padding-inline: 16px; }
   main { padding-inline: 16px; }
 }
+
+/* login y sesión */
+.login { display: grid; place-items: center; min-height: calc(100vh - 90px); padding: 24px 16px; }
+.login[hidden], #app[hidden], .user[hidden], #btn-salir[hidden] { display: none; }
+.login-card { width: min(380px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 26px; display: grid; gap: 14px; }
+.login-card .btn { width: 100%; }
+.login-card .demo { font-size: .8rem; }
+.user { font-size: .82rem; color: var(--fg); padding: 3px 4px 3px 10px; }
+.user b { color: var(--acc); }
+.btn.small { padding: 4px 10px; font-size: .8rem; }
+.status { align-items: center; }
+.tab[hidden] { display: none; }

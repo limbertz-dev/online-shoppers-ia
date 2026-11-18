@@ -60,3 +60,11 @@ erDiagram
         NUMERIC probabilidad
         TIMESTAMP fecha
     }
+    usuario {
+        SERIAL id PK
+        VARCHAR usuario UK
+        VARCHAR password_hash
+        VARCHAR rol
+        BOOLEAN activo
+        TIMESTAMP fecha
+    }

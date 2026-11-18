@@ -1,20 +1,22 @@
 """Servicio de IA: API REST para predecir si una sesión de e-commerce termina en compra."""
 import io
 import json
+import os
 from pathlib import Path
 
 import joblib
 import pandas as pd
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import text
 
+from auth import JWT_MINUTOS, autenticar, crear_token, solo_admin, usuario_actual
 from db import engine
 from pipeline import COLUMNAS, limpiar_csv, preparar_entrada
 from schemas import (CargaRespuesta, HistorialRespuesta, ModeloMetricas, PrediccionRespuesta,
-                     ReentrenamientoRespuesta, Salud, SesionEntrada)
+                     ReentrenamientoRespuesta, Salud, SesionEntrada, Token, UsuarioActual)
 from train import entrenar
 
 BASE = Path(__file__).resolve().parent
@@ -28,16 +30,23 @@ app = FastAPI(
         'siguiendo la metodología CRISP-ML(Q). Los datos de entrenamiento, los modelos con sus métricas y el '
         'historial de predicciones se guardan en PostgreSQL.\n\n'
         'Flujo: `POST /training-data` (subir CSV) → `POST /retrain` (entrenar) → `POST /predict` (predecir) → '
-        '`GET /predictions` y `GET /metrics` (consultar).'
+        '`GET /predictions` y `GET /metrics` (consultar).\n\n'
+        '**Seguridad:** todos los endpoints (salvo `/health` y `/auth/login`) exigen un JWT en el encabezado '
+        '`Authorization: Bearer <token>`. El token se obtiene en `POST /auth/login`. Rol `admin`: todo; '
+        'rol `analista`: predecir y consultar. En Swagger use el botón **Authorize**.'
     ),
     openapi_tags=[
+        {'name': 'Autenticación', 'description': 'Inicio de sesión con JWT.'},
         {'name': 'Predicción', 'description': 'Enviar datos al modelo y consultar el historial.'},
         {'name': 'Modelo', 'description': 'Métricas de rendimiento y reentrenamiento.'},
         {'name': 'Datos', 'description': 'Carga del archivo de entrenamiento.'},
         {'name': 'Sistema', 'description': 'Estado del servicio.'},
     ],
 )
-app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
+# CORS: solo los orígenes del frontend definidos en .env pueden consumir la API desde el navegador
+ORIGENES = [o.strip() for o in os.getenv('CORS_ORIGINS', 'http://localhost:5500,http://127.0.0.1:5500').split(',') if o.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=ORIGENES, allow_methods=['GET', 'POST'],
+                   allow_headers=['Authorization', 'Content-Type'])
 
 _cache_modelos = {}
 
@@ -63,10 +72,26 @@ def fila_a_metricas(f) -> dict:
     }
 
 
+# ------------------------------------------------------------------ Autenticación
+@app.post('/auth/login', response_model=Token, tags=['Autenticación'], summary='Iniciar sesión y obtener un JWT')
+def login(form: OAuth2PasswordRequestForm = Depends()):
+    """Recibe usuario y contraseña (formulario) y devuelve un JSON Web Token con vencimiento."""
+    fila = autenticar(form.username, form.password)
+    if not fila:
+        raise HTTPException(401, 'Usuario o contraseña incorrectos.', headers={'WWW-Authenticate': 'Bearer'})
+    return {'access_token': crear_token(fila['usuario'], fila['rol']), 'token_type': 'bearer',
+            'expira_en_minutos': JWT_MINUTOS, 'usuario': fila['usuario'], 'rol': fila['rol']}
+
+
+@app.get('/auth/me', response_model=UsuarioActual, tags=['Autenticación'], summary='Usuario del token actual')
+def yo(actual: dict = Depends(usuario_actual)):
+    return actual
+
+
 # ------------------------------------------------------------------ Predicción
 @app.post('/predict', response_model=PrediccionRespuesta, tags=['Predicción'],
           summary='Enviar datos al modelo y obtener la predicción')
-def predecir(sesion: SesionEntrada):
+def predecir(sesion: SesionEntrada, actual: dict = Depends(usuario_actual)):
     """Recibe las 17 variables de una sesión, devuelve si habrá compra y la guarda en el historial."""
     fila, modelo = modelo_activo()
     entrada = sesion.model_dump()
@@ -85,7 +110,8 @@ def predecir(sesion: SesionEntrada):
 
 @app.get('/predictions', response_model=HistorialRespuesta, tags=['Predicción'],
          summary='Historial de predicciones previas')
-def historial(limit: int = Query(50, ge=1, le=500), offset: int = Query(0, ge=0)):
+def historial(limit: int = Query(50, ge=1, le=500), offset: int = Query(0, ge=0),
+              actual: dict = Depends(usuario_actual)):
     """Devuelve los datos enviados y el resultado de cada predicción, de la más reciente a la más antigua."""
     with engine.connect() as con:
         total = con.execute(text('SELECT COUNT(*) FROM prediccion')).scalar()
@@ -101,7 +127,7 @@ def historial(limit: int = Query(50, ge=1, le=500), offset: int = Query(0, ge=0)
 # ------------------------------------------------------------------ Modelo
 @app.get('/metrics', response_model=ModeloMetricas, tags=['Modelo'],
          summary='Métricas de rendimiento del modelo activo')
-def metricas():
+def metricas(actual: dict = Depends(usuario_actual)):
     """Recall, Precision, F1, F2, ROC-AUC y matriz de confusión del modelo activo (conjunto de prueba)."""
     with engine.connect() as con:
         f = con.execute(text('SELECT * FROM modelo WHERE activo')).mappings().first()
@@ -112,7 +138,7 @@ def metricas():
 
 @app.get('/metrics/history', response_model=list[ModeloMetricas], tags=['Modelo'],
          summary='Métricas de todas las versiones del modelo')
-def metricas_historial():
+def metricas_historial(actual: dict = Depends(usuario_actual)):
     """Permite comparar cómo cambiaron las métricas en cada reentrenamiento."""
     with engine.connect() as con:
         filas = con.execute(text('SELECT * FROM modelo ORDER BY version DESC')).mappings().all()
@@ -120,8 +146,8 @@ def metricas_historial():
 
 
 @app.post('/retrain', response_model=ReentrenamientoRespuesta, tags=['Modelo'],
-          summary='Reentrenar el modelo con la información actualizada')
-def reentrenar():
+          summary='Reentrenar el modelo con la información actualizada (rol admin)')
+def reentrenar(actual: dict = Depends(solo_admin)):
     """Entrena una nueva versión con todos los datos de la tabla de entrenamiento usando la configuración
     elegida en el notebook (algoritmo, hiperparámetros y criterio de umbral). Guarda sus métricas y la activa
     solo si cumple Recall >= 70 %."""
@@ -133,9 +159,10 @@ def reentrenar():
 
 # ------------------------------------------------------------------ Datos
 @app.post('/training-data', response_model=CargaRespuesta, tags=['Datos'],
-          summary='Enviar el archivo CSV de entrenamiento')
+          summary='Enviar el archivo CSV de entrenamiento (rol admin)')
 async def cargar_datos(archivo: UploadFile = File(..., description='CSV con las 18 columnas del dataset'),
-                       reemplazar: bool = Query(False, description='TRUE borra los datos anteriores antes de cargar')):
+                       reemplazar: bool = Query(False, description='TRUE borra los datos anteriores antes de cargar'),
+                       actual: dict = Depends(solo_admin)):
     """Valida y limpia el CSV (tipos, filas inválidas, nulos, duplicados) y lo guarda en la tabla de
     entrenamiento. Después se puede llamar a POST /retrain."""
     if not archivo.filename.lower().endswith('.csv'):
@@ -184,9 +211,4 @@ def salud():
 
 @app.get('/', include_in_schema=False)
 def inicio():
-    return RedirectResponse('/app/' if (BASE.parent / 'web' / 'index.html').exists() else '/docs')
-
-
-# Cliente web servido por la misma API (opcional; también puede abrirse aparte)
-if (BASE.parent / 'web').exists():
-    app.mount('/app', StaticFiles(directory=BASE.parent / 'web', html=True), name='web')
+    return RedirectResponse('/docs')

@@ -2,10 +2,78 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Online Shoppers IA",
-    "description": "Servicio de IA que predice si una sesión de navegación en una tienda online termina en **compra**.\n\nModelo de clasificación supervisada entrenado con el dataset *Online Shoppers Purchasing Intention* siguiendo la metodología CRISP-ML(Q). Los datos de entrenamiento, los modelos con sus métricas y el historial de predicciones se guardan en PostgreSQL.\n\nFlujo: `POST /training-data` (subir CSV) → `POST /retrain` (entrenar) → `POST /predict` (predecir) → `GET /predictions` y `GET /metrics` (consultar).",
+    "description": "Servicio de IA que predice si una sesión de navegación en una tienda online termina en **compra**.\n\nModelo de clasificación supervisada entrenado con el dataset *Online Shoppers Purchasing Intention* siguiendo la metodología CRISP-ML(Q). Los datos de entrenamiento, los modelos con sus métricas y el historial de predicciones se guardan en PostgreSQL.\n\nFlujo: `POST /training-data` (subir CSV) → `POST /retrain` (entrenar) → `POST /predict` (predecir) → `GET /predictions` y `GET /metrics` (consultar).\n\n**Seguridad:** todos los endpoints (salvo `/health` y `/auth/login`) exigen un JWT en el encabezado `Authorization: Bearer <token>`. El token se obtiene en `POST /auth/login`. Rol `admin`: todo; rol `analista`: predecir y consultar. En Swagger use el botón **Authorize**.",
     "version": "1.0.0"
   },
   "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Autenticación"
+        ],
+        "summary": "Iniciar sesión y obtener un JWT",
+        "description": "Recibe usuario y contraseña (formulario) y devuelve un JSON Web Token con vencimiento.",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_auth_login_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Autenticación"
+        ],
+        "summary": "Usuario del token actual",
+        "operationId": "yo_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioActual"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/predict": {
       "post": {
         "tags": [
@@ -45,7 +113,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/predictions": {
@@ -56,6 +129,11 @@
         "summary": "Historial de predicciones previas",
         "description": "Devuelve los datos enviados y el resultado de cada predicción, de la más reciente a la más antigua.",
         "operationId": "historial_predictions_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "limit",
@@ -124,7 +202,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/metrics/history": {
@@ -150,7 +233,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/retrain": {
@@ -158,7 +246,7 @@
         "tags": [
           "Modelo"
         ],
-        "summary": "Reentrenar el modelo con la información actualizada",
+        "summary": "Reentrenar el modelo con la información actualizada (rol admin)",
         "description": "Entrena una nueva versión con todos los datos de la tabla de entrenamiento usando la configuración\nelegida en el notebook (algoritmo, hiperparámetros y criterio de umbral). Guarda sus métricas y la activa\nsolo si cumple Recall >= 70 %.",
         "operationId": "reentrenar_retrain_post",
         "responses": {
@@ -172,7 +260,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/training-data": {
@@ -180,9 +273,14 @@
         "tags": [
           "Datos"
         ],
-        "summary": "Enviar el archivo CSV de entrenamiento",
+        "summary": "Enviar el archivo CSV de entrenamiento (rol admin)",
         "description": "Valida y limpia el CSV (tipos, filas inválidas, nulos, duplicados) y lo guarda en la tabla de\nentrenamiento. Después se puede llamar a POST /retrain.",
         "operationId": "cargar_datos_training_data_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "reemplazar",
@@ -269,6 +367,65 @@
           "archivo"
         ],
         "title": "Body_cargar_datos_training_data_post"
+      },
+      "Body_login_auth_login_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_login_auth_login_post"
       },
       "CargaRespuesta": {
         "properties": {
@@ -818,6 +975,58 @@
           "Weekend": false
         }
       },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "JSON Web Token; enviarlo como  Authorization: Bearer <token>"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expira_en_minutos": {
+            "type": "integer",
+            "title": "Expira En Minutos"
+          },
+          "usuario": {
+            "type": "string",
+            "title": "Usuario"
+          },
+          "rol": {
+            "type": "string",
+            "title": "Rol"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expira_en_minutos",
+          "usuario",
+          "rol"
+        ],
+        "title": "Token"
+      },
+      "UsuarioActual": {
+        "properties": {
+          "usuario": {
+            "type": "string",
+            "title": "Usuario"
+          },
+          "rol": {
+            "type": "string",
+            "title": "Rol"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario",
+          "rol"
+        ],
+        "title": "UsuarioActual"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -858,9 +1067,24 @@
         ],
         "title": "ValidationError"
       }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/auth/login"
+          }
+        }
+      }
     }
   },
   "tags": [
+    {
+      "name": "Autenticación",
+      "description": "Inicio de sesión con JWT."
+    },
     {
       "name": "Predicción",
       "description": "Enviar datos al modelo y consultar el historial."
