@@ -17,15 +17,30 @@
     <span class="pill" id="st-db">BD …</span>
     <span class="pill" id="st-modelo">Modelo …</span>
     <span class="pill" id="st-datos">Datos …</span>
+    <span class="user" id="usuario-actual" hidden></span>
+    <button class="btn ghost small" id="btn-salir" hidden>Cerrar sesión</button>
   </div>
 </header>
 
+<!-- ============ LOGIN ============ -->
+<section class="login" id="login" hidden>
+  <form class="login-card" id="form-login">
+    <h2>Iniciar sesión</h2>
+    <p class="muted">El servicio de IA exige un token JWT. <code>POST /auth/login</code></p>
+    <div class="field"><label for="l-usuario">Usuario</label><input id="l-usuario" autocomplete="username" required></div>
+    <div class="field"><label for="l-password">Contraseña</label><input id="l-password" type="password" autocomplete="current-password" required></div>
+    <button class="btn primary" type="submit" id="btn-login">Ingresar</button>
+    <p class="muted demo">Demo: <b>admin</b> / admin123 (todo) · <b>analista</b> / analista123 (predecir y consultar)</p>
+  </form>
+</section>
+
+<div id="app" hidden>
 <nav class="tabs" role="tablist">
   <button class="tab active" data-tab="predecir">Predecir</button>
   <button class="tab" data-tab="historial">Historial</button>
   <button class="tab" data-tab="metricas">Métricas</button>
-  <button class="tab" data-tab="datos">Datos de entrenamiento</button>
-  <button class="tab" data-tab="reentrenar">Reentrenar</button>
+  <button class="tab solo-admin" data-tab="datos">Datos de entrenamiento</button>
+  <button class="tab solo-admin" data-tab="reentrenar">Reentrenar</button>
 </nav>
 
 <main>
@@ -122,7 +137,10 @@
   </section>
 </main>
 
+</div>
+
 <div class="toast" id="toast" role="status"></div>
+<script src="config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
