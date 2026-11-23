@@ -359,7 +359,7 @@
             "type": "string",
             "contentMediaType": "application/octet-stream",
             "title": "Archivo",
-            "description": "CSV con las 18 columnas del dataset"
+            "description": "CSV con las 18 columnas del dataset (nombres originales en inglés o en español)"
           }
         },
         "type": "object",
@@ -811,168 +811,168 @@
       },
       "SesionEntrada": {
         "properties": {
-          "Administrative": {
+          "paginas_administrativas": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Administrative",
-            "description": "Páginas administrativas visitadas"
+            "title": "Paginas Administrativas",
+            "description": "Páginas administrativas visitadas (Administrative)"
           },
-          "Administrative_Duration": {
+          "tiempo_administrativas": {
             "type": "number",
             "minimum": 0.0,
-            "title": "Administrative Duration",
+            "title": "Tiempo Administrativas",
             "description": "Segundos en páginas administrativas"
           },
-          "Informational": {
+          "paginas_informativas": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Informational",
-            "description": "Páginas informativas visitadas"
+            "title": "Paginas Informativas",
+            "description": "Páginas informativas visitadas (Informational)"
           },
-          "Informational_Duration": {
+          "tiempo_informativas": {
             "type": "number",
             "minimum": 0.0,
-            "title": "Informational Duration",
+            "title": "Tiempo Informativas",
             "description": "Segundos en páginas informativas"
           },
-          "ProductRelated": {
+          "paginas_producto": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Productrelated",
-            "description": "Páginas de productos visitadas"
+            "title": "Paginas Producto",
+            "description": "Páginas de productos visitadas (ProductRelated)"
           },
-          "ProductRelated_Duration": {
+          "tiempo_producto": {
             "type": "number",
             "minimum": 0.0,
-            "title": "Productrelated Duration",
+            "title": "Tiempo Producto",
             "description": "Segundos en páginas de productos"
           },
-          "BounceRates": {
+          "tasa_rebote": {
             "type": "number",
             "maximum": 1.0,
             "minimum": 0.0,
-            "title": "Bouncerates",
-            "description": "Tasa de rebote promedio de las páginas visitadas"
+            "title": "Tasa Rebote",
+            "description": "Tasa de rebote promedio de las páginas visitadas (BounceRates)"
           },
-          "ExitRates": {
+          "tasa_salida": {
             "type": "number",
             "maximum": 1.0,
             "minimum": 0.0,
-            "title": "Exitrates",
-            "description": "Tasa de salida promedio de las páginas visitadas"
+            "title": "Tasa Salida",
+            "description": "Tasa de salida promedio de las páginas visitadas (ExitRates)"
           },
-          "PageValues": {
+          "valor_pagina": {
             "type": "number",
             "minimum": 0.0,
-            "title": "Pagevalues",
-            "description": "Valor promedio de las páginas visitadas antes de comprar"
+            "title": "Valor Pagina",
+            "description": "Valor promedio de las páginas visitadas antes de comprar (PageValues)"
           },
-          "SpecialDay": {
+          "dia_especial": {
             "type": "number",
             "maximum": 1.0,
             "minimum": 0.0,
-            "title": "Specialday",
-            "description": "Cercanía a una fecha especial (0 a 1)"
+            "title": "Dia Especial",
+            "description": "Cercanía a una fecha especial, 0 a 1 (SpecialDay)"
           },
-          "Month": {
+          "mes": {
             "type": "string",
             "enum": [
-              "Jan",
+              "Ene",
               "Feb",
               "Mar",
-              "Apr",
+              "Abr",
               "May",
-              "June",
+              "Jun",
               "Jul",
-              "Aug",
+              "Ago",
               "Sep",
               "Oct",
               "Nov",
-              "Dec"
+              "Dic"
             ],
-            "title": "Month",
+            "title": "Mes",
             "description": "Mes de la sesión"
           },
-          "OperatingSystems": {
+          "sistema_operativo": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Operatingsystems",
+            "title": "Sistema Operativo",
             "description": "Código del sistema operativo"
           },
-          "Browser": {
+          "navegador": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Browser",
+            "title": "Navegador",
             "description": "Código del navegador"
           },
-          "Region": {
+          "region": {
             "type": "integer",
             "minimum": 1.0,
             "title": "Region",
             "description": "Código de la región"
           },
-          "TrafficType": {
+          "tipo_trafico": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Traffictype",
+            "title": "Tipo Trafico",
             "description": "Código del tipo de tráfico"
           },
-          "VisitorType": {
+          "tipo_visitante": {
             "type": "string",
             "enum": [
-              "Returning_Visitor",
-              "New_Visitor",
-              "Other"
+              "Recurrente",
+              "Nuevo",
+              "Otro"
             ],
-            "title": "Visitortype",
+            "title": "Tipo Visitante",
             "description": "Tipo de visitante"
           },
-          "Weekend": {
+          "fin_de_semana": {
             "type": "boolean",
-            "title": "Weekend",
+            "title": "Fin De Semana",
             "description": "La sesión fue en fin de semana"
           }
         },
         "type": "object",
         "required": [
-          "Administrative",
-          "Administrative_Duration",
-          "Informational",
-          "Informational_Duration",
-          "ProductRelated",
-          "ProductRelated_Duration",
-          "BounceRates",
-          "ExitRates",
-          "PageValues",
-          "SpecialDay",
-          "Month",
-          "OperatingSystems",
-          "Browser",
-          "Region",
-          "TrafficType",
-          "VisitorType",
-          "Weekend"
+          "paginas_administrativas",
+          "tiempo_administrativas",
+          "paginas_informativas",
+          "tiempo_informativas",
+          "paginas_producto",
+          "tiempo_producto",
+          "tasa_rebote",
+          "tasa_salida",
+          "valor_pagina",
+          "dia_especial",
+          "mes",
+          "sistema_operativo",
+          "navegador",
+          "region",
+          "tipo_trafico",
+          "tipo_visitante",
+          "fin_de_semana"
         ],
         "title": "SesionEntrada",
-        "description": "Datos de una sesión de navegación (las 17 variables del dataset).",
+        "description": "Datos de una sesión de navegación (las 17 variables del dataset, con nombres en español).",
         "example": {
-          "Administrative": 3,
-          "Administrative_Duration": 85.0,
-          "BounceRates": 0.005,
-          "Browser": 2,
-          "ExitRates": 0.02,
-          "Informational": 0,
-          "Informational_Duration": 0.0,
-          "Month": "Nov",
-          "OperatingSystems": 2,
-          "PageValues": 25.5,
-          "ProductRelated": 40,
-          "ProductRelated_Duration": 1500.0,
-          "Region": 1,
-          "SpecialDay": 0.0,
-          "TrafficType": 2,
-          "VisitorType": "Returning_Visitor",
-          "Weekend": false
+          "dia_especial": 0.0,
+          "fin_de_semana": false,
+          "mes": "Nov",
+          "navegador": 2,
+          "paginas_administrativas": 3,
+          "paginas_informativas": 0,
+          "paginas_producto": 40,
+          "region": 1,
+          "sistema_operativo": 2,
+          "tasa_rebote": 0.005,
+          "tasa_salida": 0.02,
+          "tiempo_administrativas": 85.0,
+          "tiempo_informativas": 0.0,
+          "tiempo_producto": 1500.0,
+          "tipo_trafico": 2,
+          "tipo_visitante": "Recurrente",
+          "valor_pagina": 25.5
         }
       },
       "Token": {

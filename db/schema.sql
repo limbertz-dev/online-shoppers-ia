@@ -1,8 +1,9 @@
 -- =====================================================================
 -- Online Shoppers IA - Script de generación de la base de datos
 -- Motor: PostgreSQL 16
--- Uso:   psql -U postgres -d online_shoppers -f db/schema.sql
---        (con Docker se ejecuta solo al crear el contenedor)
+-- Uso:   psql -U postgres -c "CREATE DATABASE online_shoppers"
+--        psql -U postgres -d online_shoppers -f db/schema.sql
+--        (o abrir este archivo en DBeaver sobre la BD online_shoppers y ejecutarlo con Alt+X)
 -- =====================================================================
 
 DROP FUNCTION IF EXISTS sp_registrar_prediccion(INTEGER, JSONB, BOOLEAN, NUMERIC);
@@ -28,30 +29,31 @@ CREATE TABLE lote_carga (
 
 -- ---------------------------------------------------------------------
 -- 2. dato_entrenamiento: datos limpios con los que se entrena el modelo
---    (mismas 17 variables del CSV + la variable objetivo revenue)
+--    (las 17 variables del dataset con nombres en español + la variable objetivo compra)
 -- ---------------------------------------------------------------------
 CREATE TABLE dato_entrenamiento (
-    id                        SERIAL PRIMARY KEY,
-    lote_id                   INTEGER      NOT NULL REFERENCES lote_carga(id) ON DELETE CASCADE,
-    administrative            INTEGER      NOT NULL CHECK (administrative >= 0),
-    administrative_duration   NUMERIC(12,4) NOT NULL CHECK (administrative_duration >= 0),
-    informational             INTEGER      NOT NULL CHECK (informational >= 0),
-    informational_duration    NUMERIC(12,4) NOT NULL CHECK (informational_duration >= 0),
-    product_related           INTEGER      NOT NULL CHECK (product_related >= 0),
-    product_related_duration  NUMERIC(12,4) NOT NULL CHECK (product_related_duration >= 0),
-    bounce_rates              NUMERIC(8,6) NOT NULL CHECK (bounce_rates BETWEEN 0 AND 1),
-    exit_rates                NUMERIC(8,6) NOT NULL CHECK (exit_rates BETWEEN 0 AND 1),
-    page_values               NUMERIC(12,6) NOT NULL CHECK (page_values >= 0),
-    special_day               NUMERIC(3,2) NOT NULL CHECK (special_day BETWEEN 0 AND 1),
-    month                     VARCHAR(4)   NOT NULL,
-    operating_systems         SMALLINT     NOT NULL,
-    browser                   SMALLINT     NOT NULL,
-    region                    SMALLINT     NOT NULL,
-    traffic_type              SMALLINT     NOT NULL,
-    visitor_type              VARCHAR(20)  NOT NULL,
-    weekend                   BOOLEAN      NOT NULL,
-    revenue                   BOOLEAN      NOT NULL,
-    fecha                     TIMESTAMP    NOT NULL DEFAULT NOW()
+    id                       SERIAL PRIMARY KEY,
+    lote_id                  INTEGER       NOT NULL REFERENCES lote_carga(id) ON DELETE CASCADE,
+    paginas_administrativas  INTEGER       NOT NULL CHECK (paginas_administrativas >= 0),
+    tiempo_administrativas   NUMERIC(12,4) NOT NULL CHECK (tiempo_administrativas >= 0),
+    paginas_informativas     INTEGER       NOT NULL CHECK (paginas_informativas >= 0),
+    tiempo_informativas      NUMERIC(12,4) NOT NULL CHECK (tiempo_informativas >= 0),
+    paginas_producto         INTEGER       NOT NULL CHECK (paginas_producto >= 0),
+    tiempo_producto          NUMERIC(12,4) NOT NULL CHECK (tiempo_producto >= 0),
+    tasa_rebote              NUMERIC(8,6)  NOT NULL CHECK (tasa_rebote BETWEEN 0 AND 1),
+    tasa_salida              NUMERIC(8,6)  NOT NULL CHECK (tasa_salida BETWEEN 0 AND 1),
+    valor_pagina             NUMERIC(12,6) NOT NULL CHECK (valor_pagina >= 0),
+    dia_especial             NUMERIC(3,2)  NOT NULL CHECK (dia_especial BETWEEN 0 AND 1),
+    mes                      VARCHAR(3)    NOT NULL CHECK (mes IN ('Ene','Feb','Mar','Abr','May','Jun',
+                                                                   'Jul','Ago','Sep','Oct','Nov','Dic')),
+    sistema_operativo        SMALLINT      NOT NULL,
+    navegador                SMALLINT      NOT NULL,
+    region                   SMALLINT      NOT NULL,
+    tipo_trafico             SMALLINT      NOT NULL,
+    tipo_visitante           VARCHAR(20)   NOT NULL CHECK (tipo_visitante IN ('Recurrente','Nuevo','Otro')),
+    fin_de_semana            BOOLEAN       NOT NULL,
+    compra                   BOOLEAN       NOT NULL,       -- variable objetivo
+    fecha                    TIMESTAMP     NOT NULL DEFAULT NOW()
 );
 CREATE INDEX ix_dato_entrenamiento_lote ON dato_entrenamiento(lote_id);
 

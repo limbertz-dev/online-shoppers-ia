@@ -14,24 +14,24 @@ erDiagram
     dato_entrenamiento {
         SERIAL id PK
         INTEGER lote_id FK
-        INTEGER administrative
-        NUMERIC administrative_duration
-        INTEGER informational
-        NUMERIC informational_duration
-        INTEGER product_related
-        NUMERIC product_related_duration
-        NUMERIC bounce_rates
-        NUMERIC exit_rates
-        NUMERIC page_values
-        NUMERIC special_day
-        VARCHAR month
-        SMALLINT operating_systems
-        SMALLINT browser
+        INTEGER paginas_administrativas
+        NUMERIC tiempo_administrativas
+        INTEGER paginas_informativas
+        NUMERIC tiempo_informativas
+        INTEGER paginas_producto
+        NUMERIC tiempo_producto
+        NUMERIC tasa_rebote
+        NUMERIC tasa_salida
+        NUMERIC valor_pagina
+        NUMERIC dia_especial
+        VARCHAR mes
+        SMALLINT sistema_operativo
+        SMALLINT navegador
         SMALLINT region
-        SMALLINT traffic_type
-        VARCHAR visitor_type
-        BOOLEAN weekend
-        BOOLEAN revenue "objetivo"
+        SMALLINT tipo_trafico
+        VARCHAR tipo_visitante
+        BOOLEAN fin_de_semana
+        BOOLEAN compra "objetivo"
         TIMESTAMP fecha
     }
     modelo {

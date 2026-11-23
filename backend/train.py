@@ -10,7 +10,7 @@ from sklearn.metrics import (confusion_matrix, f1_score, fbeta_score, precision_
 from sklearn.model_selection import StratifiedKFold, cross_val_predict, train_test_split
 from sqlalchemy import text
 
-from pipeline import COLUMNAS, CONFIG, OBJETIVO, construir_pipeline, preparar_entrada
+from pipeline import CONFIG, NOMBRES, OBJETIVO, construir_pipeline, preparar_entrada
 
 BASE = Path(__file__).resolve().parent
 RECALL_MINIMO = 0.70
@@ -30,11 +30,10 @@ def elegir_umbral(y, prob):
 
 def entrenar(engine) -> dict:
     """Lee dato_entrenamiento, entrena, evalúa, guarda el modelo y sus métricas en la BD."""
-    inverso = {v: k for k, v in COLUMNAS.items()}
-    df = pd.read_sql('SELECT * FROM dato_entrenamiento ORDER BY id', engine).rename(columns=inverso)
+    df = pd.read_sql('SELECT * FROM dato_entrenamiento ORDER BY id', engine)
     # Quita duplicados entre lotes (un mismo registro subido dos veces no debe contar doble
     # ni quedar a la vez en entrenamiento y prueba)
-    df = df.drop_duplicates(subset=list(COLUMNAS)).reset_index(drop=True)
+    df = df.drop_duplicates(subset=NOMBRES).reset_index(drop=True)
     if len(df) < 100:
         raise ValueError(f'Hay solo {len(df)} filas de entrenamiento; se necesitan al menos 100.')
 
