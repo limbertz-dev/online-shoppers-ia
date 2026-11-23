@@ -23,6 +23,8 @@ Abrir http://localhost:5500 . El backend debe estar corriendo en la URL de `conf
 | Métricas | `GET /metrics`, `GET /metrics/history` | admin, analista |
 | Datos de entrenamiento | `POST /training-data` | admin |
 | Reentrenar | `POST /retrain` | admin |
+| Al abrir la página | `GET /health` (avisa si el backend no responde) | todos |
+| Al recargar con sesión | `GET /auth/me` (valida el token guardado) | admin, analista |
 
 El token se guarda en `sessionStorage` y se envía en cada petición como `Authorization: Bearer <token>`.
 Si el backend responde 401 (token vencido o inválido) se vuelve a la pantalla de inicio de sesión.
