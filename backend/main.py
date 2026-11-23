@@ -14,7 +14,7 @@ from sqlalchemy import text
 
 from auth import JWT_MINUTOS, autenticar, crear_token, solo_admin, usuario_actual
 from db import engine
-from pipeline import COLUMNAS, limpiar_csv, preparar_entrada
+from pipeline import limpiar_csv, preparar_entrada
 from schemas import (CargaRespuesta, HistorialRespuesta, ModeloMetricas, PrediccionRespuesta,
                      ReentrenamientoRespuesta, Salud, SesionEntrada, Token, UsuarioActual)
 from train import entrenar
@@ -160,7 +160,8 @@ def reentrenar(actual: dict = Depends(solo_admin)):
 # ------------------------------------------------------------------ Datos
 @app.post('/training-data', response_model=CargaRespuesta, tags=['Datos'],
           summary='Enviar el archivo CSV de entrenamiento (rol admin)')
-async def cargar_datos(archivo: UploadFile = File(..., description='CSV con las 18 columnas del dataset'),
+async def cargar_datos(archivo: UploadFile = File(..., description='CSV con las 18 columnas del dataset '
+                                                                     '(nombres originales en inglés o en español)'),
                        reemplazar: bool = Query(False, description='TRUE borra los datos anteriores antes de cargar'),
                        actual: dict = Depends(solo_admin)):
     """Valida y limpia el CSV (tipos, filas inválidas, nulos, duplicados) y lo guarda en la tabla de
@@ -186,9 +187,9 @@ async def cargar_datos(archivo: UploadFile = File(..., description='CSV con las 
             VALUES (:n, :r, :v, :d, :i) RETURNING id"""),
             {'n': archivo.filename, 'r': resumen['filas_recibidas'], 'v': resumen['filas_validas'],
              'd': resumen['duplicados_eliminados'], 'i': resumen['filas_invalidas']}).scalar()
-        tabla = limpio.rename(columns=COLUMNAS)
-        tabla['weekend'] = tabla['weekend'].astype(bool)
-        tabla['revenue'] = tabla['revenue'].astype(bool)
+        tabla = limpio.copy()
+        tabla['fin_de_semana'] = tabla['fin_de_semana'].astype(bool)
+        tabla['compra'] = tabla['compra'].astype(bool)
         tabla.insert(0, 'lote_id', lote_id)
         tabla.to_sql('dato_entrenamiento', con, if_exists='append', index=False, method='multi', chunksize=1000)
         total = con.execute(text('SELECT COUNT(*) FROM dato_entrenamiento')).scalar()

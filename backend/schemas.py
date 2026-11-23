@@ -4,36 +4,36 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-Mes = Literal['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-TipoVisitante = Literal['Returning_Visitor', 'New_Visitor', 'Other']
+Mes = Literal['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+TipoVisitante = Literal['Recurrente', 'Nuevo', 'Otro']
 
 
 class SesionEntrada(BaseModel):
-    """Datos de una sesión de navegación (las 17 variables del dataset)."""
-    Administrative: int = Field(ge=0, description='Páginas administrativas visitadas')
-    Administrative_Duration: float = Field(ge=0, description='Segundos en páginas administrativas')
-    Informational: int = Field(ge=0, description='Páginas informativas visitadas')
-    Informational_Duration: float = Field(ge=0, description='Segundos en páginas informativas')
-    ProductRelated: int = Field(ge=0, description='Páginas de productos visitadas')
-    ProductRelated_Duration: float = Field(ge=0, description='Segundos en páginas de productos')
-    BounceRates: float = Field(ge=0, le=1, description='Tasa de rebote promedio de las páginas visitadas')
-    ExitRates: float = Field(ge=0, le=1, description='Tasa de salida promedio de las páginas visitadas')
-    PageValues: float = Field(ge=0, description='Valor promedio de las páginas visitadas antes de comprar')
-    SpecialDay: float = Field(ge=0, le=1, description='Cercanía a una fecha especial (0 a 1)')
-    Month: Mes = Field(description='Mes de la sesión')
-    OperatingSystems: int = Field(ge=1, description='Código del sistema operativo')
-    Browser: int = Field(ge=1, description='Código del navegador')
-    Region: int = Field(ge=1, description='Código de la región')
-    TrafficType: int = Field(ge=1, description='Código del tipo de tráfico')
-    VisitorType: TipoVisitante = Field(description='Tipo de visitante')
-    Weekend: bool = Field(description='La sesión fue en fin de semana')
+    """Datos de una sesión de navegación (las 17 variables del dataset, con nombres en español)."""
+    paginas_administrativas: int = Field(ge=0, description='Páginas administrativas visitadas (Administrative)')
+    tiempo_administrativas: float = Field(ge=0, description='Segundos en páginas administrativas')
+    paginas_informativas: int = Field(ge=0, description='Páginas informativas visitadas (Informational)')
+    tiempo_informativas: float = Field(ge=0, description='Segundos en páginas informativas')
+    paginas_producto: int = Field(ge=0, description='Páginas de productos visitadas (ProductRelated)')
+    tiempo_producto: float = Field(ge=0, description='Segundos en páginas de productos')
+    tasa_rebote: float = Field(ge=0, le=1, description='Tasa de rebote promedio de las páginas visitadas (BounceRates)')
+    tasa_salida: float = Field(ge=0, le=1, description='Tasa de salida promedio de las páginas visitadas (ExitRates)')
+    valor_pagina: float = Field(ge=0, description='Valor promedio de las páginas visitadas antes de comprar (PageValues)')
+    dia_especial: float = Field(ge=0, le=1, description='Cercanía a una fecha especial, 0 a 1 (SpecialDay)')
+    mes: Mes = Field(description='Mes de la sesión')
+    sistema_operativo: int = Field(ge=1, description='Código del sistema operativo')
+    navegador: int = Field(ge=1, description='Código del navegador')
+    region: int = Field(ge=1, description='Código de la región')
+    tipo_trafico: int = Field(ge=1, description='Código del tipo de tráfico')
+    tipo_visitante: TipoVisitante = Field(description='Tipo de visitante')
+    fin_de_semana: bool = Field(description='La sesión fue en fin de semana')
 
     model_config = ConfigDict(json_schema_extra={'example': {
-        'Administrative': 3, 'Administrative_Duration': 85.0, 'Informational': 0,
-        'Informational_Duration': 0.0, 'ProductRelated': 40, 'ProductRelated_Duration': 1500.0,
-        'BounceRates': 0.005, 'ExitRates': 0.02, 'PageValues': 25.5, 'SpecialDay': 0.0,
-        'Month': 'Nov', 'OperatingSystems': 2, 'Browser': 2, 'Region': 1, 'TrafficType': 2,
-        'VisitorType': 'Returning_Visitor', 'Weekend': False}})
+        'paginas_administrativas': 3, 'tiempo_administrativas': 85.0, 'paginas_informativas': 0,
+        'tiempo_informativas': 0.0, 'paginas_producto': 40, 'tiempo_producto': 1500.0,
+        'tasa_rebote': 0.005, 'tasa_salida': 0.02, 'valor_pagina': 25.5, 'dia_especial': 0.0,
+        'mes': 'Nov', 'sistema_operativo': 2, 'navegador': 2, 'region': 1, 'tipo_trafico': 2,
+        'tipo_visitante': 'Recurrente', 'fin_de_semana': False}})
 
 
 class PrediccionRespuesta(BaseModel):

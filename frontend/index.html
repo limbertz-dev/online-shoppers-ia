@@ -3,36 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Online Shoppers IA</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Panel de ventas · Sede Tarija</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Roboto+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="img/escudo-ucb.png">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
-<header class="top">
-  <div class="brand">
-    <h1>Online Shoppers IA</h1>
-    <p>Predicción de compra en sesiones de e-commerce</p>
+<!-- Iconos reutilizables -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-bolsa" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+    <symbol id="i-polera" viewBox="0 0 24 24"><path d="M8 3 3 6l2 4 3-1v12h8V9l3 1 2-4-5-3c-.6 1.6-2.1 2.6-4 2.6S8.6 4.6 8 3z"/></symbol>
+    <symbol id="i-gorra" viewBox="0 0 24 24"><path d="M4 15a8 8 0 0 1 16 0z"/><path d="M12 7v-2"/><path d="M4 15h17c1 0 1.5 1 .5 1.6-1 .6-3 .9-5 .9H4z"/></symbol>
+    <symbol id="i-taza" viewBox="0 0 24 24"><path d="M4 7h12v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M8 3v2M12 3v2"/></symbol>
+    <symbol id="i-tomatodo" viewBox="0 0 24 24"><path d="M10 2h4v3l1.5 2.5V20a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V7.5L10 5z"/><path d="M8.5 11h7"/></symbol>
+    <symbol id="i-ojo" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-ruta" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></symbol>
+    <symbol id="i-calendario" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-persona" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============ LOGIN (pantalla completa) ============ -->
+<section class="login" id="login" hidden>
+  <div class="login-galeria">
+    <div class="login-intro">
+      <span class="badge">Tienda online · Sede Tarija</span>
+      <h2>¿Quién va a comprar hoy?</h2>
+      <p>Cada visita a la tienda deja un rastro: qué páginas vio, cuánto tiempo se quedó y cuándo entró. Nuestro modelo de IA lo analiza y predice si terminará en compra.</p>
+    </div>
+    <div class="fotos" aria-hidden="true">
+      <figure><img src="img/polera.webp" alt=""><figcaption>Poleras</figcaption></figure>
+      <figure><img src="img/gorra.webp" alt=""><figcaption>Gorras</figcaption></figure>
+      <figure><img src="img/tazas.webp" alt=""><figcaption>Tazas</figcaption></figure>
+      <figure><img src="img/tomatodos.webp" alt=""><figcaption>Tomatodos</figcaption></figure>
+    </div>
   </div>
-  <div class="status" id="estado">
-    <span class="pill" id="st-api">API …</span>
-    <span class="pill" id="st-db">BD …</span>
-    <span class="pill" id="st-modelo">Modelo …</span>
-    <span class="pill" id="st-datos">Datos …</span>
+  <div class="login-panel">
+    <img class="login-logo" src="img/logo-ucb-horizontal.webp" alt="Universidad Católica Boliviana">
+    <form class="login-card" id="form-login">
+      <img class="login-escudo" src="img/escudo-ucb.png" alt="">
+      <h2>Iniciar sesión</h2>
+      <p class="muted">Panel de inteligencia de ventas de la tienda universitaria.</p>
+      <div class="field"><label for="l-usuario">Usuario</label><input id="l-usuario" autocomplete="username" placeholder="Ingrese su usuario" required></div>
+      <div class="field"><label for="l-password">Contraseña</label><input id="l-password" type="password" autocomplete="current-password" placeholder="••••••••" required></div>
+      <button class="btn primary" type="submit" id="btn-login">Ingresar</button>
+      <p class="muted demo">Demo: <b>admin</b> / admin123 · <b>analista</b> / analista123</p>
+    </form>
+    <p class="login-pie">Universidad Católica Boliviana "San Pablo" · Sede Tarija</p>
+  </div>
+</section>
+
+<!-- ============ CABECERA (después de iniciar sesión) ============ -->
+<header class="top" id="cabecera" hidden>
+  <div class="brand">
+    <img class="brand-logo" src="img/logo-ucb-horizontal.webp" alt="Universidad Católica Boliviana">
+    <span class="brand-sede"><b>Sede Tarija</b>Panel de ventas</span>
+  </div>
+  <div class="sesion-box">
     <span class="user" id="usuario-actual" hidden></span>
     <button class="btn ghost small" id="btn-salir" hidden>Cerrar sesión</button>
   </div>
 </header>
-
-<!-- ============ LOGIN ============ -->
-<section class="login" id="login" hidden>
-  <form class="login-card" id="form-login">
-    <h2>Iniciar sesión</h2>
-    <p class="muted">El servicio de IA exige un token JWT. <code>POST /auth/login</code></p>
-    <div class="field"><label for="l-usuario">Usuario</label><input id="l-usuario" autocomplete="username" required></div>
-    <div class="field"><label for="l-password">Contraseña</label><input id="l-password" type="password" autocomplete="current-password" required></div>
-    <button class="btn primary" type="submit" id="btn-login">Ingresar</button>
-    <p class="muted demo">Demo: <b>admin</b> / admin123 (todo) · <b>analista</b> / analista123 (predecir y consultar)</p>
-  </form>
-</section>
 
 <div id="app" hidden>
 <nav class="tabs" role="tablist">
@@ -43,13 +77,29 @@
   <button class="tab solo-admin" data-tab="reentrenar">Reentrenar</button>
 </nav>
 
+<!-- ============ BANNER ============ -->
+<section class="hero">
+  <div class="hero-text">
+    <span class="badge">Análisis de visitas</span>
+    <h2>¿Esta visita terminará en compra?</h2>
+    <p>Por cada visitante de la tienda online se registra qué páginas vio, cuánto tiempo pasó y cuándo entró. El modelo de IA estima si al final comprará.</p>
+  </div>
+  <div class="hero-productos" aria-hidden="true">
+    <div class="prod"><img src="img/polera.webp" alt=""><span>Polera</span></div>
+    <div class="prod"><img src="img/polo.webp" alt=""><span>Polo</span></div>
+    <div class="prod"><img src="img/gorra.webp" alt=""><span>Gorra</span></div>
+    <div class="prod"><img src="img/tazas.webp" alt=""><span>Tazas</span></div>
+    <div class="prod"><img src="img/tomatodos.webp" alt=""><span>Tomatodos</span></div>
+  </div>
+</section>
+
 <main>
   <!-- ============ PREDECIR ============ -->
   <section id="predecir" class="panel active">
     <div class="panel-head">
       <div>
-        <h2>Predecir una sesión</h2>
-        <p class="muted">Ingrese los datos de la sesión y el modelo indica si terminará en compra. <code>POST /predict</code></p>
+        <h2>Predecir una visita</h2>
+        <p class="muted">Ingrese los datos de navegación del visitante y el modelo indica si comprará. <code>POST /predict</code></p>
       </div>
       <div class="actions">
         <button class="btn ghost" id="ej-compra">Ejemplo: compra</button>
@@ -57,12 +107,15 @@
       </div>
     </div>
     <div class="predict-layout">
-      <form id="form-pred" class="form-grid"></form>
+      <div>
+        <form id="form-pred" class="grupos"></form>
+        <div class="form-foot"><button class="btn primary" id="btn-predecir" form="form-pred" type="submit">Enviar al modelo</button></div>
+      </div>
       <aside class="result" id="resultado">
+        <span class="result-icon"><svg><use href="#i-bolsa"/></svg></span>
         <p class="muted">El resultado aparecerá aquí.</p>
       </aside>
     </div>
-    <div class="form-foot"><button class="btn primary" id="btn-predecir" form="form-pred" type="submit">Enviar al modelo</button></div>
   </section>
 
   <!-- ============ HISTORIAL ============ -->
@@ -110,12 +163,13 @@
     <div class="panel-head">
       <div>
         <h2>Enviar archivo de entrenamiento</h2>
-        <p class="muted">CSV con las 18 columnas del dataset. El servicio lo valida, limpia (tipos, nulos, duplicados) y lo guarda en la base de datos. <code>POST /training-data</code></p>
+        <p class="muted">CSV con las 18 columnas del dataset (nombres originales en inglés o en español). El servicio lo valida, limpia (tipos, nulos, duplicados) y lo guarda en la base de datos. <code>POST /training-data</code></p>
       </div>
     </div>
     <form id="form-csv" class="upload">
       <label class="drop" id="drop">
         <input type="file" id="archivo" accept=".csv" required>
+        <svg class="drop-icon"><use href="#i-bolsa"/></svg>
         <span id="drop-text">Haga clic o arrastre aquí un archivo <b>.csv</b></span>
       </label>
       <label class="check"><input type="checkbox" id="reemplazar"> Reemplazar los datos anteriores</label>
@@ -136,11 +190,15 @@
     <div id="retrain-res"></div>
   </section>
 </main>
-
 </div>
 
+<footer class="pie" id="pie" hidden>
+  <img src="img/escudo-ucb.png" alt="">
+  <span>Universidad Católica Boliviana "San Pablo" · Sede Tarija</span>
+</footer>
+
 <div class="toast" id="toast" role="status"></div>
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script src="config.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
