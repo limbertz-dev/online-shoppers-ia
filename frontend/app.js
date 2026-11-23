@@ -10,36 +10,42 @@ const sesion = {
   cerrar() { try { sessionStorage.removeItem('token'); sessionStorage.removeItem('usuario'); } catch {} },
 };
 
-const MESES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+// El formulario se muestra en 4 grupos: qué vio, cómo navegó, cuándo entró y quién es el visitante
+const GRUPOS = [
+  { id: 'vio', t: 'Qué páginas vio', i: 'i-ojo', d: 'Páginas visitadas de cada tipo y segundos que pasó en ellas.' },
+  { id: 'nav', t: 'Cómo navegó', i: 'i-ruta', d: 'Métricas de Google Analytics de las páginas que recorrió.' },
+  { id: 'cuando', t: 'Cuándo entró', i: 'i-calendario', d: 'Mes, día de la semana y cercanía a una fecha especial.' },
+  { id: 'quien', t: 'Quién es el visitante', i: 'i-persona', d: 'Tipo de visitante y datos técnicos (códigos).' },
+];
 const CAMPOS = [
-  { n: 'Administrative', l: 'Páginas administrativas', d: 'cantidad visitada', t: 'int' },
-  { n: 'Administrative_Duration', l: 'Tiempo administrativas', d: 'segundos', t: 'float' },
-  { n: 'Informational', l: 'Páginas informativas', d: 'cantidad visitada', t: 'int' },
-  { n: 'Informational_Duration', l: 'Tiempo informativas', d: 'segundos', t: 'float' },
-  { n: 'ProductRelated', l: 'Páginas de productos', d: 'cantidad visitada', t: 'int' },
-  { n: 'ProductRelated_Duration', l: 'Tiempo en productos', d: 'segundos', t: 'float' },
-  { n: 'BounceRates', l: 'Tasa de rebote', d: '0 a 1', t: 'float', max: 1 },
-  { n: 'ExitRates', l: 'Tasa de salida', d: '0 a 1', t: 'float', max: 1 },
-  { n: 'PageValues', l: 'Valor de página', d: 'PageValues', t: 'float' },
-  { n: 'SpecialDay', l: 'Cercanía a fecha especial', d: '0 a 1', t: 'float', max: 1 },
-  { n: 'Month', l: 'Mes', d: 'mes de la sesión', t: 'sel', o: MESES },
-  { n: 'VisitorType', l: 'Tipo de visitante', d: 'nuevo o recurrente', t: 'sel',
-    o: ['Returning_Visitor', 'New_Visitor', 'Other'] },
-  { n: 'Weekend', l: 'Fin de semana', d: '¿fue sábado o domingo?', t: 'sel', o: ['false', 'true'] },
-  { n: 'OperatingSystems', l: 'Sistema operativo', d: 'código 1–8', t: 'int', min: 1 },
-  { n: 'Browser', l: 'Navegador', d: 'código 1–13', t: 'int', min: 1 },
-  { n: 'Region', l: 'Región', d: 'código 1–9', t: 'int', min: 1 },
-  { n: 'TrafficType', l: 'Tipo de tráfico', d: 'código 1–20', t: 'int', min: 1 },
+  { g: 'vio', n: 'paginas_administrativas', l: 'Páginas administrativas', d: 'cantidad visitada', t: 'int' },
+  { g: 'vio', n: 'tiempo_administrativas', l: 'Tiempo administrativas', d: 'segundos', t: 'float' },
+  { g: 'vio', n: 'paginas_informativas', l: 'Páginas informativas', d: 'cantidad visitada', t: 'int' },
+  { g: 'vio', n: 'tiempo_informativas', l: 'Tiempo informativas', d: 'segundos', t: 'float' },
+  { g: 'vio', n: 'paginas_producto', l: 'Páginas de productos', d: 'cantidad visitada', t: 'int' },
+  { g: 'vio', n: 'tiempo_producto', l: 'Tiempo en productos', d: 'segundos', t: 'float' },
+  { g: 'nav', n: 'tasa_rebote', l: 'Tasa de rebote', d: '0 a 1', t: 'float', max: 1 },
+  { g: 'nav', n: 'tasa_salida', l: 'Tasa de salida', d: '0 a 1', t: 'float', max: 1 },
+  { g: 'nav', n: 'valor_pagina', l: 'Valor de página', d: 'valor promedio', t: 'float' },
+  { g: 'cuando', n: 'mes', l: 'Mes', d: 'mes de la visita', t: 'sel', o: MESES },
+  { g: 'cuando', n: 'fin_de_semana', l: 'Fin de semana', d: '¿sábado o domingo?', t: 'sel', o: ['false', 'true'] },
+  { g: 'cuando', n: 'dia_especial', l: 'Cercanía a fecha especial', d: '0 a 1', t: 'float', max: 1 },
+  { g: 'quien', n: 'tipo_visitante', l: 'Tipo de visitante', d: 'nuevo o recurrente', t: 'sel', o: ['Recurrente', 'Nuevo', 'Otro'] },
+  { g: 'quien', n: 'sistema_operativo', l: 'Sistema operativo', d: 'código 1–8', t: 'int', min: 1 },
+  { g: 'quien', n: 'navegador', l: 'Navegador', d: 'código 1–13', t: 'int', min: 1 },
+  { g: 'quien', n: 'region', l: 'Región', d: 'código 1–9', t: 'int', min: 1 },
+  { g: 'quien', n: 'tipo_trafico', l: 'Tipo de tráfico', d: 'código 1–20', t: 'int', min: 1 },
 ];
 const EJEMPLOS = {
-  compra: { Administrative: 3, Administrative_Duration: 85, Informational: 0, Informational_Duration: 0,
-    ProductRelated: 40, ProductRelated_Duration: 1500, BounceRates: 0.005, ExitRates: 0.02, PageValues: 25.5,
-    SpecialDay: 0, Month: 'Nov', VisitorType: 'Returning_Visitor', Weekend: 'false', OperatingSystems: 2,
-    Browser: 2, Region: 1, TrafficType: 2 },
-  nocompra: { Administrative: 0, Administrative_Duration: 0, Informational: 0, Informational_Duration: 0,
-    ProductRelated: 8, ProductRelated_Duration: 180, BounceRates: 0.03, ExitRates: 0.06, PageValues: 0,
-    SpecialDay: 0, Month: 'May', VisitorType: 'Returning_Visitor', Weekend: 'false', OperatingSystems: 2,
-    Browser: 2, Region: 3, TrafficType: 1 },
+  compra: { paginas_administrativas: 3, tiempo_administrativas: 85, paginas_informativas: 0, tiempo_informativas: 0,
+    paginas_producto: 40, tiempo_producto: 1500, tasa_rebote: 0.005, tasa_salida: 0.02, valor_pagina: 25.5,
+    dia_especial: 0, mes: 'Nov', tipo_visitante: 'Recurrente', fin_de_semana: 'false', sistema_operativo: 2,
+    navegador: 2, region: 1, tipo_trafico: 2 },
+  nocompra: { paginas_administrativas: 0, tiempo_administrativas: 0, paginas_informativas: 0, tiempo_informativas: 0,
+    paginas_producto: 8, tiempo_producto: 180, tasa_rebote: 0.03, tasa_salida: 0.06, valor_pagina: 0,
+    dia_especial: 0, mes: 'May', tipo_visitante: 'Recurrente', fin_de_semana: 'false', sistema_operativo: 2,
+    navegador: 2, region: 3, tipo_trafico: 1 },
 };
 
 const $ = (s) => document.querySelector(s);
@@ -81,21 +87,6 @@ async function ocupado(boton, texto, fn) {
   try { await fn(); } catch (e) { aviso(e.message); } finally { boton.disabled = false; boton.innerHTML = original; }
 }
 
-// ---------------------------------------------------------------- estado
-async function cargarEstado() {
-  const pon = (id, texto, ok) => { const e = $(id); e.textContent = texto; e.className = 'pill ' + (ok ? 'ok' : 'bad'); };
-  try {
-    const s = await api('/health');
-    pon('#st-api', 'API conectada', true);
-    pon('#st-db', 'BD ' + s.base_de_datos, s.base_de_datos === 'ok');
-    pon('#st-modelo', s.modelo_activo ? `Modelo v${s.modelo_activo} activo` : 'Sin modelo activo', !!s.modelo_activo);
-    pon('#st-datos', `${s.datos_entrenamiento.toLocaleString('es-BO')} filas en la BD`, s.datos_entrenamiento > 0);
-  } catch {
-    pon('#st-api', 'API sin conexión', false);
-    ['#st-db', '#st-modelo', '#st-datos'].forEach((id) => pon(id, $(id).textContent.split(' ')[0] + ' —', false));
-  }
-}
-
 // ---------------------------------------------------------------- pestañas
 document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => {
   document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x === b));
@@ -105,13 +96,19 @@ document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () 
 }));
 
 // ---------------------------------------------------------------- predecir
+function campoHtml(c) {
+  const control = c.t === 'sel'
+    ? `<select id="f-${c.n}" name="${c.n}">${c.o.map((o) => `<option value="${o}">${o === 'true' ? 'Sí' : o === 'false' ? 'No' : o}</option>`).join('')}</select>`
+    : `<input id="f-${c.n}" name="${c.n}" type="number" required min="${c.min ?? 0}" ${c.max ? `max="${c.max}"` : ''} step="${c.t === 'int' ? 1 : 'any'}">`;
+  return `<div class="field"><label for="f-${c.n}">${c.l}</label>${control}<small>${c.n} · ${c.d}</small></div>`;
+}
 function construirFormulario() {
-  $('#form-pred').innerHTML = CAMPOS.map((c) => {
-    const control = c.t === 'sel'
-      ? `<select id="f-${c.n}" name="${c.n}">${c.o.map((o) => `<option value="${o}">${o === 'true' ? 'Sí' : o === 'false' ? 'No' : o}</option>`).join('')}</select>`
-      : `<input id="f-${c.n}" name="${c.n}" type="number" required min="${c.min ?? 0}" ${c.max ? `max="${c.max}"` : ''} step="${c.t === 'int' ? 1 : 'any'}">`;
-    return `<div class="field"><label for="f-${c.n}">${c.l}</label>${control}<small>${c.n} · ${c.d}</small></div>`;
-  }).join('');
+  $('#form-pred').innerHTML = GRUPOS.map((g) => `
+    <fieldset class="grupo g-${g.id}">
+      <legend><svg><use href="#${g.i}"/></svg>${g.t}</legend>
+      <p class="desc">${g.d}</p>
+      <div class="campos">${CAMPOS.filter((c) => c.g === g.id).map(campoHtml).join('')}</div>
+    </fieldset>`).join('');
   llenar(EJEMPLOS.compra);
 }
 function llenar(ej) { Object.entries(ej).forEach(([k, v]) => ($('#f-' + k).value = v)); }
@@ -120,7 +117,7 @@ function leerFormulario() {
   const datos = {};
   CAMPOS.forEach((c) => {
     const v = $('#f-' + c.n).value;
-    datos[c.n] = c.t === 'int' ? parseInt(v, 10) : c.t === 'float' ? parseFloat(v) : c.n === 'Weekend' ? v === 'true' : v;
+    datos[c.n] = c.t === 'int' ? parseInt(v, 10) : c.t === 'float' ? parseFloat(v) : c.n === 'fin_de_semana' ? v === 'true' : v;
   });
   return datos;
 }
@@ -135,8 +132,9 @@ $('#form-pred').addEventListener('submit', (e) => {
     const caja = $('#resultado');
     caja.className = 'result ' + (r.compra ? 'si' : 'no');
     caja.innerHTML = `
+      <span class="result-icon"><svg><use href="#i-bolsa"/></svg><span class="marca">${r.compra ? '✓' : '✕'}</span></span>
       <p class="muted">Resultado del modelo</p>
-      <div class="big">${r.compra ? 'Compra' : 'No compra'}</div>
+      <div class="big">${r.compra ? 'Comprará' : 'No comprará'}</div>
       <p class="muted">Probabilidad de compra: <b>${pct(r.probabilidad)}</b></p>
       <div class="bar"><span style="width:${r.probabilidad * 100}%"></span><i style="left:${r.umbral * 100}%" title="umbral"></i></div>
       <p class="muted" style="font-size:.78rem">La línea marca el umbral de decisión (${pct(r.umbral)}).</p>
@@ -151,13 +149,13 @@ async function cargarHistorial() {
     const r = await api(`/predictions?limit=${hist.limit}&offset=${hist.offset}`);
     hist.total = r.total;
     $('#tabla-hist').innerHTML = `<tr><th>Id</th><th>Fecha</th><th>Resultado</th><th>Prob.</th><th>Modelo</th>
-      <th>Mes</th><th>Visitante</th><th>PageValues</th><th>ExitRates</th><th>Datos enviados</th></tr>` +
+      <th>Mes</th><th>Visitante</th><th>Valor página</th><th>Tasa salida</th><th>Datos enviados</th></tr>` +
       (r.items.length ? r.items.map((p) => `<tr>
         <td class="num">#${p.id}</td><td>${fecha(p.fecha)}</td>
         <td><span class="tag ${p.compra ? 'si' : 'no'}">${p.compra ? 'Compra' : 'No compra'}</span></td>
         <td class="num">${pct(p.probabilidad)}</td><td>v${p.modelo_version}</td>
-        <td>${esc(p.entrada.Month)}</td><td>${esc(p.entrada.VisitorType)}</td>
-        <td class="num">${fmt(p.entrada.PageValues, 2)}</td><td class="num">${fmt(p.entrada.ExitRates, 3)}</td>
+        <td>${esc(p.entrada.mes)}</td><td>${esc(p.entrada.tipo_visitante)}</td>
+        <td class="num">${fmt(p.entrada.valor_pagina, 2)}</td><td class="num">${fmt(p.entrada.tasa_salida, 3)}</td>
         <td><details><summary>ver JSON</summary><pre>${esc(JSON.stringify(p.entrada, null, 1))}</pre></details></td>
       </tr>`).join('') : '<tr><td colspan="10" class="muted">Todavía no hay predicciones.</td></tr>');
     const hasta = Math.min(hist.offset + hist.limit, hist.total);
@@ -231,7 +229,6 @@ $('#form-csv').addEventListener('submit', (e) => {
         .map(([n, v], i) => `<div class="card ${i >= 4 ? 'main' : ''}"><span>${n}</span><b>${v.toLocaleString('es-BO')}</b></div>`).join('')}
       </div><div class="note ok">Lote #${r.lote_id} guardado${r.reemplazo ? ' (datos anteriores reemplazados)' : ''}. Ahora puede reentrenar el modelo.</div>`;
     aviso('CSV cargado correctamente', true);
-    cargarEstado();
   });
 });
 
@@ -254,18 +251,19 @@ $('#btn-retrain').onclick = () => ocupado($('#btn-retrain'), 'Entrenando… (uno
       ${r.filas_prueba.toLocaleString('es-BO')} de prueba.</p>
     <h3>Matriz de confusión</h3><div style="max-width:340px">${matriz(r.matriz_confusion)}</div>`;
   aviso('Modelo reentrenado', true);
-  cargarEstado();
 });
 
 // ---------------------------------------------------------------- login / logout
 function mostrarLogin() {
   $('#login').hidden = false; $('#app').hidden = true;
+  $('#cabecera').hidden = true; $('#pie').hidden = true;
   $('#usuario-actual').hidden = true; $('#btn-salir').hidden = true;
   $('#l-usuario').focus();
 }
 function mostrarApp() {
   const u = sesion.usuario;
   $('#login').hidden = true; $('#app').hidden = false;
+  $('#cabecera').hidden = false; $('#pie').hidden = false;
   $('#usuario-actual').innerHTML = `<b>${esc(u.usuario)}</b> · ${esc(u.rol)}`;
   $('#usuario-actual').hidden = false; $('#btn-salir').hidden = false;
   // Autorización en la interfaz: el analista no ve carga de datos ni reentrenamiento (el backend igual lo valida)
@@ -287,5 +285,4 @@ $('#form-login').addEventListener('submit', (e) => {
 $('#btn-salir').onclick = () => { sesion.cerrar(); mostrarLogin(); };
 
 construirFormulario();
-cargarEstado();
 if (sesion.token && sesion.usuario) mostrarApp(); else mostrarLogin();
