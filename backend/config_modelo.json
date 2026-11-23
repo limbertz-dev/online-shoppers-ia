@@ -48,25 +48,25 @@
   ],
   "umbral": 0.44,
   "columnas_numericas": [
-    "Administrative",
-    "Administrative_Duration",
-    "Informational",
-    "Informational_Duration",
-    "ProductRelated",
-    "ProductRelated_Duration",
-    "BounceRates",
-    "ExitRates",
-    "PageValues",
-    "SpecialDay",
-    "OperatingSystems",
-    "Browser",
-    "Region",
-    "TrafficType",
-    "Weekend"
+    "paginas_administrativas",
+    "tiempo_administrativas",
+    "paginas_informativas",
+    "tiempo_informativas",
+    "paginas_producto",
+    "tiempo_producto",
+    "tasa_rebote",
+    "tasa_salida",
+    "valor_pagina",
+    "dia_especial",
+    "sistema_operativo",
+    "navegador",
+    "region",
+    "tipo_trafico",
+    "fin_de_semana"
   ],
   "columnas_categoricas": [
-    "Month",
-    "VisitorType"
+    "mes",
+    "tipo_visitante"
   ],
   "random_state": 42,
   "metricas_test": {
