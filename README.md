@@ -30,6 +30,7 @@ frontend/  Aplicación web (puerto 5500) ──────────┘
 ## Dataset y modelo
 
 - **Dataset:** [Online Shoppers Purchasing Intention](https://www.kaggle.com/datasets/imakash3011/online-shoppers-purchasing-intention-dataset): 12 330 sesiones, 17 variables, objetivo `Revenue` (15,5 % compras).
+- **Nombres en español:** las columnas se traducen al cargarlas (por ejemplo `PageValues` → `valor_pagina`, `Revenue` → `compra`). El notebook, la base de datos, la API y la web usan los mismos nombres. `POST /training-data` acepta el CSV original (en inglés) o uno con columnas en español.
 - **Problema:** clasificación binaria supervisada.
 - **Métrica:** Recall(compra) ≥ 70 % como requisito, F2 como métrica principal y ROC-AUC de apoyo.
 - **Modelos comparados:** Regresión Logística, Árbol de Decisión, KNN, Random Forest y XGBoost.
@@ -41,14 +42,15 @@ frontend/  Aplicación web (puerto 5500) ──────────┘
 
 ## Cómo ejecutarlo
 
-Requisitos: Docker Desktop y Python 3.13.
+Requisitos: PostgreSQL 16 (usuario `postgres`, contraseña `postgres`, puerto 5432), Python 3.13 y, opcionalmente, DBeaver para ver las tablas.
 
 ```bash
 # 0. Configuración
 copy .env.example .env             # Linux/Mac: cp .env.example .env  (cambie JWT_SECRET)
 
 # 1. Base de datos (crea tablas, procedimientos y usuarios demo con db/schema.sql)
-docker compose up -d
+psql -U postgres -c "CREATE DATABASE online_shoppers"
+psql -U postgres -d online_shoppers -f db/schema.sql
 
 # 2. Backend: servicio de IA
 python -m venv .venv
@@ -64,6 +66,7 @@ python -m http.server 5500
 
 - Frontend: http://localhost:5500
 - Swagger del backend: http://localhost:8000/docs (botón **Authorize** para usar el token)
+- **DBeaver:** Nueva conexión → PostgreSQL → `localhost:5432`, base `online_shoppers`, usuario `postgres` / `postgres`. En *Schemas → public* están las 5 tablas; clic derecho en `public` → **Ver diagrama** muestra las relaciones. El script también se puede ejecutar desde DBeaver (abrir `db/schema.sql` → *Ejecutar script*, Alt+X).
 
 **Usuarios de demostración:**
 
