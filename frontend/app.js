@@ -8,6 +8,7 @@ const sesion = {
   get usuario() { try { return JSON.parse(sessionStorage.getItem('usuario') || 'null'); } catch { return null; } },
   guardar(t) { try { sessionStorage.setItem('token', t.access_token); sessionStorage.setItem('usuario', JSON.stringify({ usuario: t.usuario, rol: t.rol })); } catch {} },
   cerrar() { try { sessionStorage.removeItem('token'); sessionStorage.removeItem('usuario'); } catch {} },
+  usuarioActual(u) { try { sessionStorage.setItem('usuario', JSON.stringify(u)); } catch {} },
 };
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -285,4 +286,9 @@ $('#form-login').addEventListener('submit', (e) => {
 $('#btn-salir').onclick = () => { sesion.cerrar(); mostrarLogin(); };
 
 construirFormulario();
-if (sesion.token && sesion.usuario) mostrarApp(); else mostrarLogin();
+api('/health').catch(() => aviso('El servicio de IA no responde. Verifique que el backend esté encendido.'));
+if (sesion.token) {
+  api('/auth/me').then((u) => { sesion.usuarioActual(u); mostrarApp(); }).catch(() => mostrarLogin());
+} else {
+  mostrarLogin();
+}
