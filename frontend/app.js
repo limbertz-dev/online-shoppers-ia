@@ -206,9 +206,12 @@ $('#btn-met').onclick = cargarMetricas;
 
 // ---------------------------------------------------------------- datos (CSV)
 const drop = $('#drop');
+let subirAlElegir = false;
 $('#archivo').addEventListener('change', () => {
   const f = $('#archivo').files[0];
   $('#drop-text').innerHTML = f ? `<b>${esc(f.name)}</b> (${(f.size / 1024).toFixed(0)} KB)` : 'Haga clic o arrastre aquí un archivo <b>.csv</b>';
+  if (f && subirAlElegir) $('#form-csv').requestSubmit();
+  subirAlElegir = false;
 });
 ['dragover', 'dragenter'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove('over')));
@@ -219,6 +222,11 @@ drop.addEventListener('drop', (e) => {
 });
 $('#form-csv').addEventListener('submit', (e) => {
   e.preventDefault();
+  if (!$('#archivo').files[0]) {
+    subirAlElegir = true;
+    $('#archivo').click();
+    return;
+  }
   ocupado($('#btn-csv'), 'Subiendo y limpiando…', async () => {
     const fd = new FormData();
     fd.append('archivo', $('#archivo').files[0]);
