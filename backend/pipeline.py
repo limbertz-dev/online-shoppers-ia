@@ -22,35 +22,39 @@ from xgboost import XGBClassifier
 BASE = Path(__file__).resolve().parent
 CONFIG = json.loads((BASE / 'config_modelo.json').read_text(encoding='utf-8'))
 
-# Nombre en el CSV -> nombre de columna en la BD
+# Nombre original del dataset (Kaggle, en inglés) -> nombre en español que usan la BD, la API y el modelo
 COLUMNAS = {
-    'Administrative': 'administrative',
-    'Administrative_Duration': 'administrative_duration',
-    'Informational': 'informational',
-    'Informational_Duration': 'informational_duration',
-    'ProductRelated': 'product_related',
-    'ProductRelated_Duration': 'product_related_duration',
-    'BounceRates': 'bounce_rates',
-    'ExitRates': 'exit_rates',
-    'PageValues': 'page_values',
-    'SpecialDay': 'special_day',
-    'Month': 'month',
-    'OperatingSystems': 'operating_systems',
-    'Browser': 'browser',
+    'Administrative': 'paginas_administrativas',
+    'Administrative_Duration': 'tiempo_administrativas',
+    'Informational': 'paginas_informativas',
+    'Informational_Duration': 'tiempo_informativas',
+    'ProductRelated': 'paginas_producto',
+    'ProductRelated_Duration': 'tiempo_producto',
+    'BounceRates': 'tasa_rebote',
+    'ExitRates': 'tasa_salida',
+    'PageValues': 'valor_pagina',
+    'SpecialDay': 'dia_especial',
+    'Month': 'mes',
+    'OperatingSystems': 'sistema_operativo',
+    'Browser': 'navegador',
     'Region': 'region',
-    'TrafficType': 'traffic_type',
-    'VisitorType': 'visitor_type',
-    'Weekend': 'weekend',
-    'Revenue': 'revenue',
+    'TrafficType': 'tipo_trafico',
+    'VisitorType': 'tipo_visitante',
+    'Weekend': 'fin_de_semana',
+    'Revenue': 'compra',
 }
-VARIABLES = [c for c in COLUMNAS if c != 'Revenue']
-OBJETIVO = 'Revenue'
-CATEGORICAS = CONFIG['columnas_categoricas']            # Month, VisitorType
-NUMERICAS = CONFIG['columnas_numericas']                # resto (incluye Weekend como 0/1)
+NOMBRES = list(COLUMNAS.values())
+OBJETIVO = 'compra'
+VARIABLES = [c for c in NOMBRES if c != OBJETIVO]
+CATEGORICAS = CONFIG['columnas_categoricas']            # mes, tipo_visitante
+NUMERICAS = CONFIG['columnas_numericas']                # resto (incluye fin_de_semana como 0/1)
 
-MESES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-TIPOS_VISITANTE = ['Returning_Visitor', 'New_Visitor', 'Other']
-PROPORCIONES = ['BounceRates', 'ExitRates', 'SpecialDay']   # deben estar entre 0 y 1
+MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+TIPOS_VISITANTE = ['Recurrente', 'Nuevo', 'Otro']
+# Valores del CSV original que se traducen al español
+TRADUCCION_MESES = {'Jan': 'Ene', 'Apr': 'Abr', 'June': 'Jun', 'Aug': 'Ago', 'Dec': 'Dic'}
+TRADUCCION_VISITANTES = {'Returning_Visitor': 'Recurrente', 'New_Visitor': 'Nuevo', 'Other': 'Otro'}
+PROPORCIONES = ['tasa_rebote', 'tasa_salida', 'dia_especial']   # deben estar entre 0 y 1
 
 
 def a_booleano(serie: pd.Series) -> pd.Series:
@@ -60,37 +64,40 @@ def a_booleano(serie: pd.Series) -> pd.Series:
 
 
 def limpiar_csv(df: pd.DataFrame):
-    """Valida y limpia un CSV de entrenamiento. Devuelve (df_limpio, resumen)."""
-    faltantes = [c for c in COLUMNAS if c not in df.columns]
+    """Valida y limpia un CSV de entrenamiento. Devuelve (df_limpio, resumen).
+    Acepta el CSV original de Kaggle (columnas en inglés) o uno con las columnas en español."""
+    df = df.rename(columns=COLUMNAS)
+    faltantes = [c for c in NOMBRES if c not in df.columns]
     if faltantes:
         raise ValueError(f'Faltan columnas en el CSV: {faltantes}')
 
-    df = df[list(COLUMNAS)].copy()
+    df = df[NOMBRES].copy()
     recibidas = len(df)
 
-    # Tipos
+    # Tipos y traducción de valores
     for c in NUMERICAS:
-        if c != 'Weekend':
+        if c != 'fin_de_semana':
             df[c] = pd.to_numeric(df[c], errors='coerce')
-    df['Weekend'] = a_booleano(df['Weekend'])
-    df['Revenue'] = a_booleano(df['Revenue'])
-    df['Month'] = df['Month'].astype(str).str.strip()
-    df['VisitorType'] = df['VisitorType'].astype(str).str.strip()
+    df['fin_de_semana'] = a_booleano(df['fin_de_semana'])
+    df['compra'] = a_booleano(df['compra'])
+    df['mes'] = df['mes'].astype(str).str.strip().replace(TRADUCCION_MESES)
+    df['tipo_visitante'] = df['tipo_visitante'].astype(str).str.strip().replace(TRADUCCION_VISITANTES)
 
     # Filas inválidas: sin objetivo, valores negativos, proporciones fuera de [0,1] o categorías desconocidas
-    invalida = df['Revenue'].isna()
-    numericas_sin_weekend = [c for c in NUMERICAS if c != 'Weekend']
-    invalida |= (df[numericas_sin_weekend] < 0).any(axis=1)
+    invalida = df['compra'].isna()
+    numericas_sin_fin = [c for c in NUMERICAS if c != 'fin_de_semana']
+    invalida |= (df[numericas_sin_fin] < 0).any(axis=1)
     invalida |= (df[PROPORCIONES] > 1).any(axis=1)
-    invalida |= ~df['Month'].isin(MESES + ['nan'])
-    invalida |= ~df['VisitorType'].isin(TIPOS_VISITANTE + ['nan'])
+    invalida |= ~df['mes'].isin(MESES + ['nan'])
+    invalida |= ~df['tipo_visitante'].isin(TIPOS_VISITANTE + ['nan'])
     df = df[~invalida].copy()
 
     # Imputación de nulos en variables de entrada (mediana / moda), como en el pipeline del notebook
     nulos_imputados = int(df[VARIABLES].isna().sum().sum() + (df[CATEGORICAS] == 'nan').sum().sum())
-    for c in numericas_sin_weekend:
+    for c in numericas_sin_fin:
         df[c] = df[c].fillna(df[c].median())
-    df['Weekend'] = df['Weekend'].fillna(df['Weekend'].mode()[0] if df['Weekend'].notna().any() else False)
+    df['fin_de_semana'] = df['fin_de_semana'].fillna(
+        df['fin_de_semana'].mode()[0] if df['fin_de_semana'].notna().any() else False)
     for c in CATEGORICAS:
         moda = df.loc[df[c] != 'nan', c].mode()
         df[c] = df[c].replace('nan', moda[0] if len(moda) else np.nan)
@@ -111,9 +118,9 @@ def limpiar_csv(df: pd.DataFrame):
 
 
 def preparar_entrada(df: pd.DataFrame) -> pd.DataFrame:
-    """Deja las variables de entrada listas para el modelo (Weekend como 0/1)."""
+    """Deja las variables de entrada listas para el modelo (fin_de_semana como 0/1)."""
     X = df[VARIABLES].copy()
-    X['Weekend'] = X['Weekend'].astype(int)
+    X['fin_de_semana'] = X['fin_de_semana'].astype(int)
     return X
 
 
