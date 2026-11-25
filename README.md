@@ -91,7 +91,7 @@ python -m pytest backend/tests -q
 No necesitan la base de datos. Comprueban:
 
 - **Limpieza** (`test_limpieza.py`): traducción de columnas, duplicados, filas inválidas, nulos y columnas faltantes.
-- **Seguridad** (`test_seguridad.py`): 401 sin token o con token falso/vencido, 403 para el rol analista y CORS.
+- **Seguridad** (`test_seguridad.py`): 401 sin token, con token falso, firmado con otra clave o vencido, 403 para el rol analista y CORS.
 - **Umbral** (`test_umbral.py`): el umbral elegido siempre cumple Recall ≥ 70 %.
 
 ## Endpoints
