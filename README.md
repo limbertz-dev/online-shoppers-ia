@@ -79,6 +79,21 @@ python -m http.server 5500
 
 **Notebook:** `pip install -r requirements-notebook.txt` y abrir `notebooks/01_crispmlq_online_shoppers.ipynb`.
 
+**Dataset de prueba:** `data/online_shoppers_intention_mini.csv` tiene 1 500 sesiones con la misma proporción de compras (15,5 %). Al subirlo con "Reemplazar los datos anteriores" y reentrenar, el modelo da Recall ≈ 0,81 y umbral 0,28: menos datos, métricas algo más bajas. Sirve para ver que el reentrenamiento usa los datos de la base.
+
+## Pruebas automáticas
+
+```bash
+pip install -r backend/requirements-test.txt
+python -m pytest backend/tests -q
+```
+
+No necesitan la base de datos. Comprueban:
+
+- **Limpieza** (`test_limpieza.py`): traducción de columnas, duplicados, filas inválidas, nulos y columnas faltantes.
+- **Seguridad** (`test_seguridad.py`): 401 sin token o con token falso/vencido, 403 para el rol analista y CORS.
+- **Umbral** (`test_umbral.py`): el umbral elegido siempre cumple Recall ≥ 70 %.
+
 ## Endpoints
 
 | Método | Ruta | Descripción | Acceso |
